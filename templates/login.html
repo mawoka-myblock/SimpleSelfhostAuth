@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+
+    const sendLogin = async (login_data) => {
+        const res = await fetch("/account/login", {
+            method: "POST",
+            body: JSON.stringify(login_data),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        if (res.status === 200) {
+            window.location.replace("{{redir_url}}")
+        }
+
+    }
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 flex flex-col" x-data="{username: '', password: ''}">
+    <div class="mb-4">
+        <label class="block text-grey-darker text-sm font-bold mb-2" for="username">
+            Username
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-800" id="username" type="text"
+               placeholder="Username" x-model="username">
+    </div>
+    <div class="mb-6">
+        <label class="block text-gray-800 text-sm font-bold mb-2" for="password">
+            Password
+        </label>
+        <input class="shadow appearance-none border border-red-300 rounded w-full py-2 px-3 text-gray-800 mb-3"
+               id="password" type="password" placeholder="******************" x-model="password">
+        <p class="text-red text-xs italic">Please choose a password.</p>
+    </div>
+    <div class="flex items-center justify-between">
+        <button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded" type="button"
+                @click="sendLogin({password: password, username: username}).then()">
+            Sign In
+        </button>
+        <a class="inline-block align-baseline font-bold text-sm text-blue hover:text-blue-800" href="#">
+            Forgot Password?
+        </a>
+    </div>
+</div>
+{% endblock %}
