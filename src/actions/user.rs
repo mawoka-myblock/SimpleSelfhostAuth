@@ -38,8 +38,7 @@ pub fn setup_totp_auth(user_id: Uuid, conn: &PgConnection) -> Result<SetupTOTPRe
     rng.fill(&mut res);
     let res = hex::encode(res);
     let target = users.find(user_id);
-    let res2 = diesel::update(target).set(totp_token.eq(Some(&res))).execute(conn)?;
-    println!("{:?}", &res2);
+    diesel::update(target).set(totp_token.eq(Some(&res))).execute(conn)?;
     let totp = TOTP::new(
         Algorithm::SHA1,
         6,
