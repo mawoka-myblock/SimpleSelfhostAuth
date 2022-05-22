@@ -9,7 +9,7 @@ edition = "2021"
 diesel = { version = "1.4.4", features = ["postgres", "r2d2", "chrono", "uuidv07"] }
 dotenv = "0.15.0"
 actix-web = "4"
-actix = "0.13"
+#actix = "0.13"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
@@ -24,6 +24,13 @@ mime_guess = "2.0"
 #actix-redis = "0.11"
 #redis-async = "0.4.0"
 askama = "0.10"
-redis = {version = "0.21", features = ["acl", "aio", "r2d2"], default-features = false}
+redis = { version = "0.21", features = ["acl", "aio", "r2d2"], default-features = false }
 #fred = {version = "5.0.0", features = ["serde-json"]}
 deadpool-redis = "0.10"
+jsonwebtoken = "8"
+lazy_static = "1.4"
+time = "0.3.9"
+rand = "0.8"
+totp-rs = { version = "1.4", features = ["qr"] }
+rand_chacha = "0.3"
+hex = "0.4"

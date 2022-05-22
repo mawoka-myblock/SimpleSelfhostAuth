@@ -5,12 +5,15 @@ use actix_identity::Identity;
 use actix_web::web::{self};
 use actix_web::{get, post, Error, HttpResponse};
 use serde::Deserialize;
+use crate::actions::user::check_totp_token;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct LoginInput {
     pub username: Option<String>,
     pub email: Option<String>,
     pub password: String,
+    pub stay_logged_in: bool,
+    pub totp: Option<String>,
 }
 
 #[post("/login")]
@@ -19,6 +22,9 @@ pub async fn login(
     pool: web::Data<DbPool>,
     data: web::Json<LoginInput>,
 ) -> Result<HttpResponse, Error> {
+    let stay_logged_in = data.stay_logged_in;
+    let totp_token = data.0.clone().totp;
+    let totp_token_is_some = data.totp.is_some();
     let user: HttpResponse = match &data.email {
         Some(_) => {
             let res = web::block(move || {
@@ -42,7 +48,17 @@ pub async fn login(
                         admin: user.admin,
                         scopes: user.scopes,
                     };
-                    id.remember(serde_json::to_string(&u).unwrap());
+                    if totp_token_is_some && user.totp_token.is_some() {
+                        if check_totp_token(totp_token.as_ref().unwrap().to_string(), user.totp_token.unwrap()) {
+
+                        } else {
+                            return Ok(HttpResponse::Unauthorized().body("TOTP invalid"))
+                        }
+                    }
+                    id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
+                        Some(t) => t,
+                        None => return Ok(HttpResponse::InternalServerError().finish())
+                    });
                     HttpResponse::Ok().json(u)
                 }
                 None => HttpResponse::NotFound().finish(),
@@ -71,7 +87,10 @@ pub async fn login(
                             admin: user.admin,
                             scopes: user.scopes,
                         };
-                        id.remember(serde_json::to_string(&u).unwrap());
+                        id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
+                            Some(t) => t,
+                            None => return Ok(HttpResponse::InternalServerError().finish())
+                        });
                         HttpResponse::Ok().json(u)
                     }
                     None => HttpResponse::NotFound().finish(),
@@ -103,4 +122,19 @@ pub async fn create_user(
 pub async fn logout(id: Identity) -> Result<HttpResponse, Error> {
     id.forget();
     Ok(HttpResponse::Ok().finish())
+}
+
+#[post("/setup_totp")]
+pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
+    let user = match actions::parse_identity(id) {
+        Some(u) => u,
+        None => return Ok(HttpResponse::Unauthorized().finish())
+    };
+    let res = web::block(move || {
+        let conn = pool.get()?;
+        actions::user::setup_totp_auth(user.id, &conn)
+    })
+        .await?
+        .map_err(actix_web::error::ErrorInternalServerError)?;
+    Ok(HttpResponse::Ok().json(res))
 }

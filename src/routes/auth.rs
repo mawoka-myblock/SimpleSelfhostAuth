@@ -13,7 +13,6 @@ pub async fn proxy_auth(redis: web::Data<Pool>,
                         pool: web::Data<DbPool>,
                         req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
-    println!("Req came in!");
     let user = match parse_identity(id) {
         Some(u) => u,
         None => return Ok(HttpResponse::Unauthorized().finish()),
@@ -46,7 +45,6 @@ pub async fn proxy_auth(redis: web::Data<Pool>,
         .await
         .unwrap();
     let host2 = host.clone();
-    println!("here");
     let app = match redis_res {
         Some(t) => {
             let a: App = serde_json::from_str(&*t).unwrap();
@@ -60,7 +58,7 @@ pub async fn proxy_auth(redis: web::Data<Pool>,
             app
         }
     };
-    println!("{:?}, {:?}, {:?}", request_uri, remote_addr, host);
+    // println!("{:?}, {:?}, {:?}", request_uri, remote_addr, host);
     return if user.admin || user.scopes.contains(&format!("app:{}", &app.name)) {
         Ok(HttpResponse::Ok().finish())
     } else {

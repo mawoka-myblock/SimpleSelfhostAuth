@@ -16,7 +16,7 @@ pub struct GetUsersQuery {
 pub async fn get_users(id: Identity, query: web::Query<GetUsersQuery>, pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
     let offset = query.offset;
     match parse_identity(id) {
-        Some(u) => u,
+        Some(u) => if !u.admin { return Ok(HttpResponse::Unauthorized().finish()); },
         None => return Ok(HttpResponse::Unauthorized().finish())
     };
 
@@ -39,7 +39,7 @@ pub struct GetUserQuery {
 pub async fn get_user(id: Identity, query: web::Query<GetUserQuery>, pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
     let user_id = query.id;
     match parse_identity(id) {
-        Some(u) => u,
+        Some(u) => if !u.admin { return Ok(HttpResponse::Unauthorized().finish()); },
         None => return Ok(HttpResponse::Unauthorized().finish())
     };
 

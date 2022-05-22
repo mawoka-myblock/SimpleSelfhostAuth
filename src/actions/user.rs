@@ -6,7 +6,9 @@ use argon2::{
     Argon2,
 };
 use diesel::prelude::*;
+use totp_rs::{Algorithm, TOTP};
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
 fn user_to_private_user(pu: &User) -> PrivateUser {
     PrivateUser {
@@ -18,6 +20,52 @@ fn user_to_private_user(pu: &User) -> PrivateUser {
         admin: pu.admin,
         scopes: pu.scopes.to_vec(),
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SetupTOTPResponse {
+    pub url: String,
+    pub qr_code: String,
+    pub secret: String,
+}
+
+pub fn setup_totp_auth(user_id: Uuid, conn: &PgConnection) -> Result<SetupTOTPResponse, DbError> {
+    use schema::users::dsl::{users, totp_token};
+    use rand::prelude::*;
+    use rand_chacha::ChaCha20Rng;
+    let mut rng = ChaCha20Rng::from_entropy();
+    let mut res = [0u8; 32];
+    rng.fill(&mut res);
+    let res = hex::encode(res);
+    let target = users.find(user_id);
+    let res2 = diesel::update(target).set(totp_token.eq(Some(&res))).execute(conn)?;
+    println!("{:?}", &res2);
+    let totp = TOTP::new(
+        Algorithm::SHA1,
+        6,
+        1,
+        30,
+        res,
+    );
+    Ok(SetupTOTPResponse {
+        secret: totp.get_secret_base32(),
+        url: totp.get_url("SimpleSelfhostAuth", "SimpleSelfhostAuth"),
+        qr_code: match totp.get_qr("SimpleSelfhostAuth", "SimpleSelfhostAuth") {
+            Ok(t) => t,
+            Err(_) => "".to_string()
+        },
+    })
+}
+
+pub fn check_totp_token(totp_token: String, totp_secret: String) -> bool {
+    let totp = TOTP::new(
+        Algorithm::SHA1,
+        6,
+        1,
+        30,
+        totp_secret,
+    );
+    totp.check_current(&*totp_token).unwrap_or(false)
 }
 
 pub fn get_user_by_email_and_password(
@@ -73,6 +121,7 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         created_at: chrono::Utc::now().naive_utc(),
         admin: false,
         scopes: vec![],
+        totp_token: None,
     };
     let res = diesel::insert_into(table)
         .values(&new_user)
@@ -143,6 +192,7 @@ pub fn patch_user(data: PatchUser, conn: &PgConnection) -> Result<PrivateUser, D
             Some(t) => t,
             None => user.scopes
         },
+        totp_token: user.totp_token,
     };
     let target = users.find(data.id);
     diesel::update(target).set(&updated_user).execute(conn)?;

@@ -14,6 +14,9 @@ extern crate diesel;
 extern crate dotenv;
 #[macro_use]
 extern crate diesel_migrations;
+#[macro_use]
+extern crate lazy_static;
+
 
 use actix_cors::Cors;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
@@ -31,6 +34,7 @@ async fn main() -> std::io::Result<()> {
 
     let conn = pool.get().unwrap();
     let redis_url = env::var("REDIS_URL").expect("no DB URL");
+    env::var("SECRET_KEY").expect("not SECRET_KEY");
     let cfg = Config::from_url(redis_url);
     let pool_redis = cfg.create_pool(None).unwrap();
     embedded_migrations::run(&conn).unwrap();
@@ -51,7 +55,8 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/users")
                             .service(routes::users::login) // POST /login
-                            .service(routes::users::create_user), // POST /create
+                            .service(routes::users::create_user) // POST /create
+                            .service(routes::users::setup_totp) // POST /setup_totp
                     )
                     .service(
                         web::scope("/apps")

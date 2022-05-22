@@ -22,6 +22,7 @@ table! {
         created_at -> Timestamp,
         admin -> Bool,
         scopes -> Array<Text>,
+        totp_token -> Nullable<Text>,
     }
 }
 

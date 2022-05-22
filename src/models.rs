@@ -16,6 +16,7 @@ pub struct User {
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
     pub scopes: Vec<String>,
+    pub totp_token: Option<String>
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
