@@ -57,6 +57,7 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::login) // POST /login
                             .service(routes::users::create_user) // POST /create
                             .service(routes::users::setup_totp) // POST /setup_totp
+                            .service(routes::users::get_login_status) // GET /check
                     )
                     .service(
                         web::scope("/apps")

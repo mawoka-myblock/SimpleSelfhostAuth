@@ -49,10 +49,8 @@ pub async fn login(
                         scopes: user.scopes,
                     };
                     if totp_token_is_some && user.totp_token.is_some() {
-                        if check_totp_token(totp_token.as_ref().unwrap().to_string(), user.totp_token.unwrap()) {
-
-                        } else {
-                            return Ok(HttpResponse::Unauthorized().body("TOTP invalid"))
+                        if check_totp_token(totp_token.as_ref().unwrap().to_string(), user.totp_token.unwrap()) {} else {
+                            return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
                         }
                     }
                     id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
@@ -137,4 +135,12 @@ pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>) -> Result<HttpRes
         .await?
         .map_err(actix_web::error::ErrorInternalServerError)?;
     Ok(HttpResponse::Ok().json(res))
+}
+
+#[get("/me")]
+pub async fn get_login_status(id: Identity) -> Result<HttpResponse, Error> {
+    match actions::parse_identity(id) {
+        Some(u) => Ok(HttpResponse::Ok().json(u)),
+        None => Ok(HttpResponse::Unauthorized().finish())
+    }
 }
