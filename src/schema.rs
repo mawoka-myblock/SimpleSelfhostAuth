@@ -21,6 +21,7 @@ table! {
         verified -> Nullable<Bool>,
         created_at -> Timestamp,
         admin -> Bool,
+        scopes -> Array<Text>,
     }
 }
 

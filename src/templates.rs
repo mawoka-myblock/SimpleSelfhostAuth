@@ -11,5 +11,5 @@ pub struct LoginTemplate<'a> {
 pub struct ErrorTemplate<'a> {
     pub error_code: &'a str,
     pub error_title: &'a str,
-    pub error_message: &'a str
+    pub error_message: &'a str,
 }

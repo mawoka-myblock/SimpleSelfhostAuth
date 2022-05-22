@@ -1,14 +1,18 @@
-use crate::models::{User, CreateUser, PrivateUser};
-use diesel::prelude::*;
+use crate::actions::DbError;
+use crate::models::{CreateUser, PrivateUser, User};
+use crate::schema;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use diesel::prelude::*;
 use uuid::Uuid;
-use crate::actions::DbError;
-use crate::schema;
 
-pub fn get_user_by_email_and_password(email_in: String, password_in: String, conn: &PgConnection) -> Result<Option<User>, DbError> {
+pub fn get_user_by_email_and_password(
+    email_in: String,
+    password_in: String,
+    conn: &PgConnection,
+) -> Result<Option<User>, DbError> {
     use schema::users::dsl::{email, users};
     let user = users.filter(email.eq(email_in)).first::<User>(conn);
     match user {
@@ -16,14 +20,18 @@ pub fn get_user_by_email_and_password(email_in: String, password_in: String, con
             let hash = PasswordHash::new(&user.password).unwrap();
             match Argon2::default().verify_password(password_in.as_bytes(), &hash) {
                 Ok(_) => Ok(Some(user)),
-                Err(_) => Ok(None)
+                Err(_) => Ok(None),
             }
         }
         Err(_) => Ok(None),
     }
 }
 
-pub fn get_user_by_username_and_password(username_in: String, password_in: String, conn: &PgConnection) -> Result<Option<User>, DbError> {
+pub fn get_user_by_username_and_password(
+    username_in: String,
+    password_in: String,
+    conn: &PgConnection,
+) -> Result<Option<User>, DbError> {
     use schema::users::dsl::{username, users};
     let user = users.filter(username.eq(username_in)).first::<User>(conn);
     match user {
@@ -31,7 +39,7 @@ pub fn get_user_by_username_and_password(username_in: String, password_in: Strin
             let hash = PasswordHash::new(&user.password).unwrap();
             match Argon2::default().verify_password(password_in.as_bytes(), &hash) {
                 Ok(_) => Ok(Some(user)),
-                Err(_) => Ok(None)
+                Err(_) => Ok(None),
             }
         }
         Err(_) => Ok(None),
@@ -52,8 +60,11 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         verified: Some(false),
         created_at: chrono::Utc::now().naive_utc(),
         admin: false,
+        scopes: vec![]
     };
-    let res = diesel::insert_into(table).values(&new_user).get_result::<User>(conn)?;
+    let res = diesel::insert_into(table)
+        .values(&new_user)
+        .get_result::<User>(conn)?;
 
     Ok(PrivateUser {
         id: res.id,
@@ -61,6 +72,7 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         profile_pic: res.profile_pic,
         email: res.email,
         created_at: res.created_at,
-        admin: res.admin
+        admin: res.admin,
+        scopes: res.scopes
     })
 }

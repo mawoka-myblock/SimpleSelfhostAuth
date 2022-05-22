@@ -1,9 +1,11 @@
+pub mod actions;
 pub mod db;
 pub mod models;
 pub mod routes;
 pub mod schema;
-pub mod actions;
 pub mod templates;
+
+use std::env;
 
 extern crate chrono;
 
@@ -16,10 +18,10 @@ extern crate diesel_migrations;
 use actix_cors::Cors;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{web, App, HttpServer};
-// use diesel::prelude::*;
-// use diesel::r2d2::{ConnectionManager, Pool};
-use diesel_migrations::embed_migrations;
+use deadpool_redis::Config;
 
+use diesel_migrations::embed_migrations;
+// use futures::future::{join_all, Future};
 
 embed_migrations!();
 #[actix_web::main]
@@ -28,6 +30,9 @@ async fn main() -> std::io::Result<()> {
     let pool = db::get_pool();
 
     let conn = pool.get().unwrap();
+    let redis_url = env::var("REDIS_URL").expect("no DB URL");
+    let cfg = Config::from_url(redis_url);
+    let pool_redis = cfg.create_pool(None).unwrap();
     embedded_migrations::run(&conn).unwrap();
 
     HttpServer::new(move || {
@@ -39,21 +44,25 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(IdentityService::new(policy))
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(pool_redis.clone()))
             .wrap(cors)
             .service(
                 web::scope("/api/v1")
                     .service(
                         web::scope("/users")
                             .service(routes::users::login) // POST /login
-                            .service(routes::users::create_user) // POST /create
+                            .service(routes::users::create_user), // POST /create
                     )
+                    .service(web::scope("/apps").service(routes::apps::create_app)),
             )
-            .service(routes::auth::proxy_auth)
-            .service(web::scope("/account")
-                .service(routes::frontend::login)
-                .service(routes::users::login))
+            .service(routes::auth::proxy_auth)// GET /auth
+            .service(
+                web::scope("/account")
+                    .service(routes::frontend::login)// GET /login
+                    .service(routes::users::login), // POST /login
+            )
     })
-        .bind(("0.0.0.0", 8080))?
-        .run()
-        .await
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
