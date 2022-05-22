@@ -53,7 +53,14 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::login) // POST /login
                             .service(routes::users::create_user), // POST /create
                     )
-                    .service(web::scope("/apps").service(routes::apps::create_app)),
+                    .service(
+                        web::scope("/apps")
+                            .service(routes::apps::create_app)// POST /create
+                    ).service(
+                    web::scope("/admin")
+                        .service(routes::admin::get_users) // GET /users?offset=0
+                        .service(routes::admin::get_user) // GET /user?id=UUID
+                ),
             )
             .service(routes::auth::proxy_auth)// GET /auth
             .service(
@@ -62,7 +69,7 @@ async fn main() -> std::io::Result<()> {
                     .service(routes::users::login), // POST /login
             )
     })
-    .bind(("0.0.0.0", 8080))?
-    .run()
-    .await
+        .bind(("0.0.0.0", 8080))?
+        .run()
+        .await
 }

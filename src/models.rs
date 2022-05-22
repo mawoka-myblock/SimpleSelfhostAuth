@@ -15,7 +15,7 @@ pub struct User {
     pub verified: Option<bool>,
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
-    pub scopes: Vec<String>
+    pub scopes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
@@ -26,12 +26,13 @@ pub struct CreateUser {
     pub password: String,
     pub profile_pic: Option<String>,
     pub email: String,
-    pub scopes: Vec<String>
+    // pub scopes: Vec<String>
     // verified: Option<bool>,
     // created_at: chrono::NaiveDateTime,
 }
 
-#[derive(Deserialize, Serialize, Queryable)]
+#[derive(Deserialize, Serialize, Queryable, Debug, Clone, AsChangeset)]
+#[table_name = "users"]
 pub struct PublicUser {
     pub id: Uuid,
     pub username: String,
@@ -48,11 +49,11 @@ pub struct PrivateUser {
     pub email: String,
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
-    pub scopes: Vec<String>
+    pub scopes: Vec<String>,
 }
 
 #[derive(
-    Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable, Associations,
+Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable, Associations,
 )]
 #[belongs_to(foreign_key = id)]
 #[primary_key(id)]
@@ -85,4 +86,16 @@ pub struct CreateApp {
     pub token_lifetime: i32,
     pub owner: Uuid,
     pub domains: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PatchUser {
+    pub id: Uuid,
+    pub username: Option<String>,
+    pub profile_pic: Option<String>,
+    pub password: Option<String>,
+    pub email: Option<String>,
+    pub admin: Option<bool>,
+    pub scopes: Option<Vec<String>>,
+    pub verified: Option<bool>,
 }

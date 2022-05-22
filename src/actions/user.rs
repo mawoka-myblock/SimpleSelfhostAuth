@@ -1,5 +1,5 @@
 use crate::actions::DbError;
-use crate::models::{CreateUser, PrivateUser, User};
+use crate::models::{CreateUser, PrivateUser, User, PatchUser};
 use crate::schema;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -7,6 +7,18 @@ use argon2::{
 };
 use diesel::prelude::*;
 use uuid::Uuid;
+
+fn user_to_private_user(pu: &User) -> PrivateUser {
+    PrivateUser {
+        id: pu.id,
+        username: pu.username.to_string(),
+        profile_pic: pu.profile_pic.as_ref().cloned(),
+        email: pu.email.to_string(),
+        created_at: pu.created_at,
+        admin: pu.admin,
+        scopes: pu.scopes.to_vec(),
+    }
+}
 
 pub fn get_user_by_email_and_password(
     email_in: String,
@@ -60,7 +72,7 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         verified: Some(false),
         created_at: chrono::Utc::now().naive_utc(),
         admin: false,
-        scopes: vec![]
+        scopes: vec![],
     };
     let res = diesel::insert_into(table)
         .values(&new_user)
@@ -73,6 +85,66 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         email: res.email,
         created_at: res.created_at,
         admin: res.admin,
-        scopes: res.scopes
+        scopes: res.scopes,
     })
+}
+
+pub fn get_all_users(offset: i64, conn: &PgConnection) -> Result<Vec<PrivateUser>, DbError> {
+    use schema::users::dsl::{users, created_at};
+
+    let res = users.order_by(created_at.desc()).limit(10).offset(offset).load::<User>(conn)?;
+
+    Ok(res.iter().map(user_to_private_user).collect())
+}
+
+pub fn get_single_private_user(input_id: uuid::Uuid, conn: &PgConnection) -> Result<PrivateUser, DbError> {
+    use schema::users::dsl::{users, id};
+    let res = users.filter(id.eq(input_id)).first::<User>(conn)?;
+    Ok(user_to_private_user(&res))
+}
+
+pub fn patch_user(data: PatchUser, conn: &PgConnection) -> Result<PrivateUser, DbError> {
+    use schema::users::dsl::{users, id};
+    let user = users.filter(id.eq(&data.id)).first::<User>(conn)?;
+
+    let updated_user = User {
+        id: user.id,
+        username: match data.username {
+            Some(t) => t,
+            None => user.username
+        },
+        password: match data.password {
+            Some(t) => {
+                let argon2 = Argon2::default();
+                let salt = SaltString::generate(&mut OsRng);
+                let password_hash = argon2.hash_password(t.as_bytes(), &salt)?;
+                password_hash.to_string()
+            }
+            None => user.password
+        },
+        profile_pic: match data.profile_pic {
+            Some(t) => Some(t),
+            None => user.profile_pic
+        },
+        email: match data.email {
+            Some(t) => t,
+            None => user.email
+        },
+        verified: match data.verified {
+            Some(t) => Some(t),
+            None => user.verified
+        },
+        created_at: user.created_at,
+        admin: match data.admin {
+            Some(t) => t,
+            None => user.admin
+        },
+        scopes: match data.scopes {
+            Some(t) => t,
+            None => user.scopes
+        },
+    };
+    let target = users.find(data.id);
+    diesel::update(target).set(&updated_user).execute(conn)?;
+    Ok(user_to_private_user(&updated_user))
 }
