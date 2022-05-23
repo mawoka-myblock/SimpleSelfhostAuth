@@ -16,7 +16,7 @@ pub struct User {
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
     pub scopes: Vec<String>,
-    pub totp_token: Option<String>
+    pub totp_token: Option<String>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ pub struct PrivateUser {
 }
 
 #[derive(
-Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable, Associations,
+    Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable, Associations,
 )]
 #[belongs_to(foreign_key = id)]
 #[primary_key(id)]

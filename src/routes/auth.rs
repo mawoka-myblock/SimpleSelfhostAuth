@@ -1,17 +1,18 @@
+use crate::actions::app as actions;
+use crate::actions::parse_identity;
 use crate::db::DbPool;
+use crate::models::App;
 use actix_identity::Identity;
 use actix_web::web::{self};
 use actix_web::{get, http::header, Error, HttpRequest, HttpResponse};
-use deadpool_redis::{Pool, redis::{cmd}};
-use crate::actions::{parse_identity};
-use crate::actions::app as actions;
-use crate::models::App;
+use deadpool_redis::{redis::cmd, Pool};
 
 #[get("/auth")]
-pub async fn proxy_auth(redis: web::Data<Pool>,
-                        id: Identity,
-                        pool: web::Data<DbPool>,
-                        req: HttpRequest,
+pub async fn proxy_auth(
+    redis: web::Data<Pool>,
+    id: Identity,
+    pool: web::Data<DbPool>,
+    req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     let user = match parse_identity(id) {
         Some(u) => u,
@@ -54,7 +55,9 @@ pub async fn proxy_auth(redis: web::Data<Pool>,
             let app = web::block(move || {
                 let conn = pool.get()?;
                 actions::get_app_from_domain(host2.to_str().unwrap(), &conn)
-            }).await?.map_err(actix_web::error::ErrorNotFound)?;
+            })
+            .await?
+            .map_err(actix_web::error::ErrorNotFound)?;
             app
         }
     };
@@ -63,9 +66,5 @@ pub async fn proxy_auth(redis: web::Data<Pool>,
         Ok(HttpResponse::Ok().finish())
     } else {
         Ok(HttpResponse::Unauthorized().body("You don't have the rights to access this app."))
-    }
+    };
 }
-
-
-
-

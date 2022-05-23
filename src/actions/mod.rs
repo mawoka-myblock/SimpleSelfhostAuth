@@ -1,12 +1,12 @@
 pub mod app;
 pub mod user;
 
-use std::env;
-use crate::models::{PrivateUser};
+use crate::models::PrivateUser;
 use actix_identity::Identity;
-use jsonwebtoken::{encode, decode, Header, Algorithm, Validation, EncodingKey, DecodingKey};
-use serde::{Serialize, Deserialize};
-use time::{OffsetDateTime, Duration};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use serde::{Deserialize, Serialize};
+use std::env;
+use time::{Duration, OffsetDateTime};
 
 pub type DbError = Box<dyn std::error::Error + Send + Sync>;
 lazy_static! {
@@ -26,10 +26,14 @@ pub fn parse_identity(id: Identity) -> Option<PrivateUser> {
         Some(t) => {
             // let user: PrivateUser = serde_json::from_str(&t).unwrap();
             // Some(user)
-            let token = decode::<Claims>(&t, &DecodingKey::from_secret(secret.as_ref()), &Validation::default());
+            let token = decode::<Claims>(
+                &t,
+                &DecodingKey::from_secret(secret.as_ref()),
+                &Validation::default(),
+            );
             match token {
                 Ok(res) => Some(res.claims.user),
-                Err(_) => None
+                Err(_) => None,
             }
         }
         None => None,
@@ -40,7 +44,7 @@ pub fn create_jwt(user: PrivateUser, long: bool) -> Option<String> {
     let time = OffsetDateTime::now_utc();
     let dur = match long {
         true => Duration::days(30),
-        false => Duration::hours(1)
+        false => Duration::hours(1),
     };
     let unix_ts = time + dur;
     let claims = Claims {
@@ -48,14 +52,16 @@ pub fn create_jwt(user: PrivateUser, long: bool) -> Option<String> {
         user,
     };
     let secret = env::var("SECRET_KEY").expect("no SECRET_KEY");
-    let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref()));
+    let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_ref()),
+    );
     return match token {
         Err(e) => {
             println!("{:?}", e);
             None
         }
-        Ok(s) => {
-            Some(s)
-        }
+        Ok(s) => Some(s),
     };
 }

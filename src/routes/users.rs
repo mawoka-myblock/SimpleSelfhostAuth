@@ -1,3 +1,4 @@
+use crate::actions::user::check_totp_token;
 use crate::db::DbPool;
 use crate::models::CreateUser;
 use crate::{actions, models};
@@ -5,7 +6,6 @@ use actix_identity::Identity;
 use actix_web::web::{self};
 use actix_web::{get, post, Error, HttpResponse};
 use serde::Deserialize;
-use crate::actions::user::check_totp_token;
 
 #[derive(Deserialize, Clone)]
 pub struct LoginInput {
@@ -13,7 +13,7 @@ pub struct LoginInput {
     pub email: Option<String>,
     pub password: String,
     pub stay_logged_in: bool,
-    pub totp: Option<String>,
+    pub totp: Option<i32>,
 }
 
 #[post("/login")]
@@ -35,8 +35,8 @@ pub async fn login(
                     &conn,
                 )
             })
-                .await?
-                .map_err(actix_web::error::ErrorInternalServerError)?;
+            .await?
+            .map_err(actix_web::error::ErrorInternalServerError)?;
             match res {
                 Some(user) => {
                     let u = models::PrivateUser {
@@ -49,13 +49,19 @@ pub async fn login(
                         scopes: user.scopes,
                     };
                     if totp_token_is_some && user.totp_token.is_some() {
-                        if check_totp_token(totp_token.as_ref().unwrap().to_string(), user.totp_token.unwrap()) {} else {
+                        if check_totp_token(
+                            totp_token.as_ref().unwrap().to_string(),
+                            user.totp_token.unwrap(),
+                        ) {
+                        } else {
                             return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
                         }
+                    } else if user.totp_token.is_some() {
+                        return Ok(HttpResponse::BadRequest().body("TOTP not provided"));
                     }
                     id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
                         Some(t) => t,
-                        None => return Ok(HttpResponse::InternalServerError().finish())
+                        None => return Ok(HttpResponse::InternalServerError().finish()),
                     });
                     HttpResponse::Ok().json(u)
                 }
@@ -72,8 +78,8 @@ pub async fn login(
                         &conn,
                     )
                 })
-                    .await?
-                    .map_err(actix_web::error::ErrorInternalServerError)?;
+                .await?
+                .map_err(actix_web::error::ErrorInternalServerError)?;
                 match res {
                     Some(user) => {
                         let u = models::PrivateUser {
@@ -85,9 +91,20 @@ pub async fn login(
                             admin: user.admin,
                             scopes: user.scopes,
                         };
+                        if totp_token_is_some && user.totp_token.is_some() {
+                            if check_totp_token(
+                                totp_token.as_ref().unwrap().to_string(),
+                                user.totp_token.unwrap(),
+                            ) {
+                            } else {
+                                return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
+                            }
+                        } else if user.totp_token.is_some() {
+                            return Ok(HttpResponse::BadRequest().body("TOTP not provided"));
+                        }
                         id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
                             Some(t) => t,
-                            None => return Ok(HttpResponse::InternalServerError().finish())
+                            None => return Ok(HttpResponse::InternalServerError().finish()),
                         });
                         HttpResponse::Ok().json(u)
                     }
@@ -102,18 +119,22 @@ pub async fn login(
 
 #[post("/create")]
 pub async fn create_user(
-    _id: Identity,
+    id: Identity,
     pool: web::Data<DbPool>,
     data: web::Json<CreateUser>,
 ) -> Result<HttpResponse, Error> {
-    let _ = web::block(move || {
+    match actions::parse_identity(id) {
+        Some(u) => u,
+        None => return Ok(HttpResponse::Unauthorized().finish()),
+    };
+    let res = web::block(move || {
         let conn = pool.get()?;
         actions::user::create_user(data.into_inner(), &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError);
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
 
-    Ok(HttpResponse::Created().finish())
+    Ok(HttpResponse::Created().json(res))
 }
 
 #[get("/logout")]
@@ -126,14 +147,14 @@ pub async fn logout(id: Identity) -> Result<HttpResponse, Error> {
 pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
     let user = match actions::parse_identity(id) {
         Some(u) => u,
-        None => return Ok(HttpResponse::Unauthorized().finish())
+        None => return Ok(HttpResponse::Unauthorized().finish()),
     };
     let res = web::block(move || {
         let conn = pool.get()?;
         actions::user::setup_totp_auth(user.id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -141,6 +162,6 @@ pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>) -> Result<HttpRes
 pub async fn get_login_status(id: Identity) -> Result<HttpResponse, Error> {
     match actions::parse_identity(id) {
         Some(u) => Ok(HttpResponse::Ok().json(u)),
-        None => Ok(HttpResponse::Unauthorized().finish())
+        None => Ok(HttpResponse::Unauthorized().finish()),
     }
 }

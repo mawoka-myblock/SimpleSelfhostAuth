@@ -26,7 +26,7 @@
         if (!confirm("Are you sure you want to enable TOTP?!")) {
             return
         }
-        const res = await fetch("/api/v1/users/setup_totp")
+        const res = await fetch("/api/v1/users/setup_totp", {method: "POST"})
         if (res.status === 401) {
             loggedIn.set({status: false, admin: false})
             return

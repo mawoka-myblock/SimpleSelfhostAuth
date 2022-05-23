@@ -17,7 +17,6 @@ extern crate diesel_migrations;
 #[macro_use]
 extern crate lazy_static;
 
-
 use actix_cors::Cors;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{web, App, HttpServer};
@@ -57,25 +56,28 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::login) // POST /login
                             .service(routes::users::create_user) // POST /create
                             .service(routes::users::setup_totp) // POST /setup_totp
-                            .service(routes::users::get_login_status) // GET /check
+                            .service(routes::users::get_login_status), // GET /check
                     )
                     .service(
-                        web::scope("/apps")
-                            .service(routes::apps::create_app)// POST /create
-                    ).service(
-                    web::scope("/admin")
-                        .service(routes::admin::get_users) // GET /users?offset=0
-                        .service(routes::admin::get_user) // GET /user?id=UUID
-                ),
+                        web::scope("/apps").service(routes::apps::create_app), // POST /create
+                    )
+                    .service(
+                        web::scope("/admin")
+                            .service(routes::admin::get_users) // GET /users?offset=0
+                            .service(routes::admin::get_user) // GET /user?id=UUID
+                            .service(routes::admin::patch_user), // PATCH /user
+                    ),
             )
-            .service(routes::auth::proxy_auth)// GET /auth
+            .service(routes::auth::proxy_auth) // GET /auth
             .service(
                 web::scope("/account")
-                    .service(routes::frontend::login)// GET /login
+                    .service(routes::frontend::login) // GET /login
                     .service(routes::users::login), // POST /login
             )
+            .service(routes::frontend::index)
+            .service(routes::frontend::dist)
     })
-        .bind(("0.0.0.0", 8080))?
-        .run()
-        .await
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }

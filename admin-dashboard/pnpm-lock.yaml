@@ -1,34 +1,85 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@felte/reporter-tippy': ^1.1.2
+  '@felte/validator-yup': ^1.0.8
   '@sveltejs/vite-plugin-svelte': ^1.0.0-next.30
   '@tsconfig/svelte': ^2.0.1
   autoprefixer: ^10.4.4
+  felte: ^1.2.2
   postcss: ^8.4.12
   postcss-load-config: ^3.1.4
   svelte: ^3.44.0
   svelte-check: ^2.2.7
   svelte-preprocess: ^4.10.5
+  svelte-tippy: ^1.3.2
   tailwindcss: ^3.0.23
+  tippy.js: ^6.3.7
   tslib: ^2.3.1
   typescript: ^4.5.4
   vite: ^2.9.9
+  yup: ^0.32.11
 
 devDependencies:
+  '@felte/reporter-tippy': 1.1.2_tippy.js@6.3.7
+  '@felte/validator-yup': 1.0.8_yup@0.32.11
   '@sveltejs/vite-plugin-svelte': 1.0.0-next.44_svelte@3.48.0+vite@2.9.9
   '@tsconfig/svelte': 2.0.1
   autoprefixer: 10.4.7_postcss@8.4.14
+  felte: 1.2.2_svelte@3.48.0
   postcss: 8.4.14
   postcss-load-config: 3.1.4_postcss@8.4.14
   svelte: 3.48.0
   svelte-check: 2.7.1_bwfybwdzwmlevsatlte2x4gwcy
   svelte-preprocess: 4.10.6_kwmypdju4ysizxi7azib3bf22y
+  svelte-tippy: 1.3.2
   tailwindcss: 3.0.24
+  tippy.js: 6.3.7
   tslib: 2.4.0
   typescript: 4.6.4
   vite: 2.9.9
+  yup: 0.32.11
 
 packages:
+
+  /@babel/runtime/7.18.0:
+    resolution: {integrity: sha512-YMQvx/6nKEaucl0MY56mwIG483xk8SDNdlUwb2Ts6FUpr7fm85DxEmsY18LXBNhcTz6tO6JwZV8w1W06v8UKeg==}
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      regenerator-runtime: 0.13.9
+    dev: true
+
+  /@felte/common/1.1.1:
+    resolution: {integrity: sha512-IRfz5mZmwchk70w2K4gz/dB49x2tDM4EMMx+TTpUW5ZbWhb6Bxj6hFJL7AXF9LWM5jCdUCPZo3V0KGQtrbkT7A==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: true
+
+  /@felte/core/1.3.2:
+    resolution: {integrity: sha512-xfn3yeATLpnDijyA36opnwZMSqjsHgp4a+KDSLCqhsC46bEFTO/XFQS/02YDSefNkqcwNlHI5E1BtOG0IUVh1w==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      '@felte/common': 1.1.1
+    dev: true
+
+  /@felte/reporter-tippy/1.1.2_tippy.js@6.3.7:
+    resolution: {integrity: sha512-NPhNfzn26sjUVmIi9lqKnD1qWAv3k4odREuN+Z6ltijOV4qcdEC/ts+rNnSdR5fLFzYWBg909O9XzJuiwzUZTQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    peerDependencies:
+      tippy.js: ^6.0.0
+    dependencies:
+      '@felte/common': 1.1.1
+      tippy.js: 6.3.7
+    dev: true
+
+  /@felte/validator-yup/1.0.8_yup@0.32.11:
+    resolution: {integrity: sha512-drlRLogYKQNBOfiXIvOdIAkM8yGDXWXHszIwt/Rd2RUJ5ow4rAxLaMds0iZ6Jt2hj0K9wLG62fpnqF5gmDeyaQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    peerDependencies:
+      yup: ^0.32.9
+    dependencies:
+      '@felte/common': 1.1.1
+      yup: 0.32.11
+    dev: true
 
   /@jridgewell/resolve-uri/3.0.7:
     resolution: {integrity: sha512-8cXDaBBHOr2pQ7j77Y6Vp5VDT2sIqWyWQ56TjEq4ih/a4iST3dItRe8Q9fp0rrIl9DoKhWQtUQz/YpOxLkXbNA==}
@@ -67,6 +118,10 @@ packages:
       fastq: 1.13.0
     dev: true
 
+  /@popperjs/core/2.11.5:
+    resolution: {integrity: sha512-9X2obfABZuDVLCgPK9aX0a/x4jaOEweTTWE2+9sr0Qqqevj2Uv5XorvusThmc9XGYpS9yI+fhh8RTafBtGposw==}
+    dev: true
+
   /@rollup/pluginutils/4.2.1:
     resolution: {integrity: sha512-iKnFXr7NkdZAIHiIWE+BX5ULi/ucVFYWD6TbAV+rZctiRTY2PL6tsIKhoIOaoskiWAkgu+VsbXgUVDNLHf+InQ==}
     engines: {node: '>= 8.0.0'}
@@ -100,6 +155,10 @@ packages:
 
   /@tsconfig/svelte/2.0.1:
     resolution: {integrity: sha512-aqkICXbM1oX5FfgZd2qSSAGdyo/NRxjWCamxoyi3T8iVQnzGge19HhDYzZ6NrVOW7bhcWNSq9XexWFtMzbB24A==}
+    dev: true
+
+  /@types/lodash/4.14.182:
+    resolution: {integrity: sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==}
     dev: true
 
   /@types/node/17.0.35:
@@ -531,6 +590,16 @@ packages:
       reusify: 1.0.4
     dev: true
 
+  /felte/1.2.2_svelte@3.48.0:
+    resolution: {integrity: sha512-ZCosUXNWaSdpmGX2sHmt12FBSAH+eJXfXAigTVvreLNtwIDid3v1NJ0nIRjAb2R//owBixI5gYBGmRiSJRI2ig==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    peerDependencies:
+      svelte: ^3.31.0
+    dependencies:
+      '@felte/core': 1.3.2
+      svelte: 3.48.0
+    dev: true
+
   /fill-range/7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
     engines: {node: '>=8'}
@@ -653,6 +722,14 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
+  /lodash-es/4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    dev: true
+
+  /lodash/4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+    dev: true
+
   /magic-string/0.25.9:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
     dependencies:
@@ -708,6 +785,10 @@ packages:
 
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
+    dev: true
+
+  /nanoclone/0.2.1:
+    resolution: {integrity: sha512-wynEP02LmIbLpcYw8uBKpcfF6dmg2vcpKqxeH5UcoKEYdExslsdUA4ugFauuaeYdTB76ez6gJW8XAZ6CgkXYxA==}
     dev: true
 
   /nanoid/3.3.4:
@@ -824,6 +905,10 @@ packages:
       source-map-js: 1.0.2
     dev: true
 
+  /property-expr/2.0.5:
+    resolution: {integrity: sha512-IJUkICM5dP5znhCckHSv30Q4b5/JA5enCtkRHYaOVOAocnH/1BQEYTC5NMfT3AVl/iXKdr3aqQbQn9DxyWknwA==}
+    dev: true
+
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
@@ -838,6 +923,10 @@ packages:
     engines: {node: '>=8.10.0'}
     dependencies:
       picomatch: 2.3.1
+    dev: true
+
+  /regenerator-runtime/0.13.9:
+    resolution: {integrity: sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA==}
     dev: true
 
   /resolve-from/4.0.0:
@@ -1017,6 +1106,12 @@ packages:
       typescript: 4.6.4
     dev: true
 
+  /svelte-tippy/1.3.2:
+    resolution: {integrity: sha512-41f+85hwhKBRqX0UNYrgFsi34Kk/KDvUkIZXYANxkWoA2NTVTCZbUC2J8hRNZ4TRVxObTshoZRjK2co5+i6LMw==}
+    dependencies:
+      tippy.js: 6.3.7
+    dev: true
+
   /svelte/3.48.0:
     resolution: {integrity: sha512-fN2YRm/bGumvjUpu6yI3BpvZnpIm9I6A7HR4oUNYd7ggYyIwSA/BX7DJ+UXXffLp6XNcUijyLvttbPVCYa/3xQ==}
     engines: {node: '>= 8'}
@@ -1052,11 +1147,21 @@ packages:
       - ts-node
     dev: true
 
+  /tippy.js/6.3.7:
+    resolution: {integrity: sha512-E1d3oP2emgJ9dRQZdf3Kkn0qJgI6ZLpyS5z6ZkY1DF3kaQaBsGZsndEpHwx+eC+tYM41HaSNvNtLx8tU57FzTQ==}
+    dependencies:
+      '@popperjs/core': 2.11.5
+    dev: true
+
   /to-regex-range/5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
     dependencies:
       is-number: 7.0.0
+    dev: true
+
+  /toposort/2.0.2:
+    resolution: {integrity: sha1-riF2gXXRVZ1IvvNUILL0li8JwzA=}
     dev: true
 
   /tslib/2.4.0:
@@ -1109,4 +1214,17 @@ packages:
   /yaml/1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
+    dev: true
+
+  /yup/0.32.11:
+    resolution: {integrity: sha512-Z2Fe1bn+eLstG8DRR6FTavGD+MeAwyfmouhHsIUgaADz8jvFKbO/fXc2trJKZg+5EBjh4gGm3iU/t3onKlXHIg==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@babel/runtime': 7.18.0
+      '@types/lodash': 4.14.182
+      lodash: 4.17.21
+      lodash-es: 4.17.21
+      nanoclone: 0.2.1
+      property-expr: 2.0.5
+      toposort: 2.0.2
     dev: true
