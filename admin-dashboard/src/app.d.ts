@@ -13,3 +13,14 @@ export enum AvailableAdminScreens {
     createUser = "createUser",
     viewUser = "viewUser"
 }
+
+export interface App {
+    id: string
+    name: string
+    description?: string
+    owner: string
+    created_at: string
+    updated_at: string
+    token_lifetime: number
+    domains: string[]
+}

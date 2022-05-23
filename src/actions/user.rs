@@ -194,3 +194,8 @@ pub fn patch_user(data: PatchUser, conn: &PgConnection) -> Result<PrivateUser, D
     diesel::update(target).set(&updated_user).execute(conn)?;
     Ok(user_to_private_user(&updated_user))
 }
+
+pub fn delete_user(id: Uuid, conn: &PgConnection) -> Result<usize, DbError> {
+    use schema::users::dsl::users;
+    Ok(diesel::delete(users.find(id)).execute(conn)?)
+}

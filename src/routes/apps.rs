@@ -38,22 +38,3 @@ pub async fn create_app(redis: web::Data<Pool>, pool: web::Data<DbPool>) -> Resu
     Ok(HttpResponse::Ok().finish())
 }
 */
-#[post("/create")]
-pub async fn create_app(
-    id: Identity,
-    pool: web::Data<DbPool>,
-    data: web::Json<models::CreateApp>,
-) -> Result<HttpResponse, Error> {
-    let user = match parse_identity(id) {
-        Some(u) => u,
-        None => return Ok(HttpResponse::Unauthorized().finish()),
-    };
-    let created_app = web::block(move || {
-        let conn = pool.get()?;
-        app::create_app(data.into_inner(), app::Input::PrivateUser(user), &conn)
-    })
-    .await?
-    .map_err(actix_web::error::ErrorInternalServerError)?;
-
-    Ok(HttpResponse::Created().json(created_app))
-}

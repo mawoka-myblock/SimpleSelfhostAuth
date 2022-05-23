@@ -59,13 +59,16 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::get_login_status), // GET /check
                     )
                     .service(
-                        web::scope("/apps").service(routes::apps::create_app), // POST /create
-                    )
-                    .service(
                         web::scope("/admin")
-                            .service(routes::admin::get_users) // GET /users?offset=0
+                            .service(routes::admin::get_users) // GET /users?offset=Int
                             .service(routes::admin::get_user) // GET /user?id=UUID
-                            .service(routes::admin::patch_user), // PATCH /user
+                            .service(routes::admin::patch_user) // PATCH /user
+                            .service(routes::admin::get_apps) // GET /apps
+                            .service(routes::admin::create_app) // POST /app
+                            .service(routes::admin::get_app) // GET /app?id=UUID
+                            .service(routes::admin::patch_app) // PATCH /app
+                            .service(routes::admin::delete_user) // DELETE /user?id=UUID
+                            .service(routes::admin::delete_app) // DELETE /app?id=UUID
                     ),
             )
             .service(routes::auth::proxy_auth) // GET /auth
@@ -77,7 +80,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::frontend::index)
             .service(routes::frontend::dist)
     })
-    .bind(("0.0.0.0", 8080))?
-    .run()
-    .await
+        .bind(("0.0.0.0", 8080))?
+        .run()
+        .await
 }

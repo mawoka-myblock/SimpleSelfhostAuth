@@ -1,9 +1,10 @@
 use crate::actions::DbError;
-use crate::models::{App, CreateApp, PrivateUser, User};
+use crate::models::{App, AppInput, CreateApp, PatchApp, PrivateUser, User};
 use crate::{models, schema};
 use diesel::prelude::*;
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub fn get_app_from_domain(domain: &str, conn: &PgConnection) -> Result<App, DbError> {
     use schema::apps::dsl::{apps, domains};
@@ -19,11 +20,7 @@ pub enum Input {
     PrivateUser(PrivateUser),
 }
 
-pub fn create_app(
-    data: models::CreateApp,
-    user: Input,
-    conn: &PgConnection,
-) -> Result<App, DbError> {
+pub fn create_app(data: AppInput, user: Input, conn: &PgConnection) -> Result<App, DbError> {
     use schema::apps::dsl::{apps, name};
     use schema::apps::table;
     let private_user = match user {
@@ -51,7 +48,7 @@ pub fn create_app(
     Ok(app)
 }
 
-pub fn list_apps(conn: &PgConnection, offset: i64) -> Result<Vec<App>, DbError> {
+pub fn list_apps(offset: i64, conn: &PgConnection) -> Result<Vec<App>, DbError> {
     use schema::apps::dsl::{apps, updated_at};
     let res = apps
         .order_by(updated_at.desc())
@@ -59,4 +56,48 @@ pub fn list_apps(conn: &PgConnection, offset: i64) -> Result<Vec<App>, DbError> 
         .offset(offset)
         .load::<App>(conn)?;
     Ok(res)
+}
+
+pub fn patch_app(app: PatchApp, user: PrivateUser, conn: &PgConnection) -> Result<App, DbError> {
+    use schema::apps::dsl::{apps, id, owner};
+    let old_app: App = apps
+        .filter(id.eq(&app.id))
+        .filter(owner.eq(&user.id))
+        .first::<App>(conn)?;
+    let new_app = App {
+        id: old_app.id,
+        name: match app.name {
+            Some(n) => n,
+            None => old_app.name,
+        },
+        updated_at: chrono::Utc::now().naive_utc(),
+        created_at: old_app.created_at,
+        owner: user.id,
+        domains: match app.domains {
+            Some(d) => d,
+            None => old_app.domains,
+        },
+
+        description: match app.description {
+            Some(n) => Some(n),
+            None => old_app.description,
+        },
+        token_lifetime: match app.token_lifetime {
+            Some(n) => n,
+            None => old_app.token_lifetime,
+        },
+    };
+    let target = apps.find(app.id);
+    diesel::update(target).set(&new_app).execute(conn)?;
+    Ok(new_app)
+}
+
+pub fn get_app_from_id(id: Uuid, conn: &PgConnection) -> Result<App, DbError> {
+    use schema::apps::dsl::apps;
+    Ok(apps.find(id).first::<App>(conn)?)
+}
+
+pub fn delete_app_from_id(id: Uuid, conn: &PgConnection) -> Result<usize, DbError> {
+    use schema::apps::dsl::apps;
+    Ok(diesel::delete(apps.find(id)).execute(conn)?)
 }

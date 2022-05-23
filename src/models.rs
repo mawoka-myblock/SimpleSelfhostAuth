@@ -90,6 +90,23 @@ pub struct CreateApp {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PatchApp {
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub token_lifetime: Option<i32>,
+    pub domains: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AppInput {
+    pub name: String,
+    pub description: Option<String>,
+    pub token_lifetime: i32,
+    pub domains: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PatchUser {
     pub id: Uuid,
     pub username: Option<String>,

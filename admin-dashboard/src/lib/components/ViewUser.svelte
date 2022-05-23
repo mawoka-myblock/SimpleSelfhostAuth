@@ -59,9 +59,20 @@
     }
     let tempScopeAdd = ""
     let getUser = getUserFunction()
+    const deleteUser = async () => {
+        if (!confirm("Are you sure you want to delete this user?!")) {
+            return
+        }
+        await fetch(`/api/v1/admin/user?id=${user_id}`, {
+            method: "DELETE"
+        })
+        screenSelected = "home"
+    }
 
 </script>
 <button on:click={() => {screenSelected = "home"}}>Close</button>
+<br>
+<button on:click={deleteUser}>DELETE USER</button>
 
 {#await getUser}
     <Spinner/>
