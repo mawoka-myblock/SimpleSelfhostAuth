@@ -1,3 +1,3 @@
-import {writable} from "svelte/store";
+import { writable } from 'svelte/store';
 
-export const loggedIn = writable({status: false, admin: false})
+export const loggedIn = writable({ status: false, admin: false });
