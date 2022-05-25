@@ -5,13 +5,14 @@
     import {createTippy} from 'svelte-tippy';
     import 'tippy.js/animations/perspective-subtle.css';
     import 'tippy.js/dist/tippy.css';
+    import Tabs from "./Tabs.svelte";
 
     const tippy = createTippy({
         arrow: true,
         animation: 'perspective-subtle',
         placement: 'right'
     });
-    let appScreenSelected = false
+    let selectedTab = "Users"
 
     const getUsers = async (): Promise<Array<PrivateUser>> => {
         const res = await fetch("/api/v1/admin/users?offset=0")
@@ -69,16 +70,9 @@
     let selectedAppId = ""
 </script>
 
-<div class="top-0 left-0 w-screen grid grid-cols-2">
-    <button on:click={() => {appScreenSelected = true}} class:bg-green-500={appScreenSelected}>
-        Apps
-    </button>
-    <button on:click={() => {appScreenSelected = false}} class:bg-green-500={!appScreenSelected}>
-        Users
-    </button>
-</div>
+<Tabs available_tabs={["Users", "Apps"]} bind:selected_tab={selectedTab}/>
 
-{#if appScreenSelected}
+{#if selectedTab === "Apps"}
     <!-- Apps -->
     {#if screenSelected === "home"}
         {#await getApps}
@@ -127,7 +121,7 @@
                             <td class="px-6 py-4"
                                 use:tippy={{content: app.domains.length !== 0 ? app.domains.join(", ") : "No domains"}}>
                                 Domains [{app.domains.length}]
-                                <button on:click={() => {addDomain(app.id, app.domains)}}>Add scope</button>
+                                <button on:click={() => {addDomain(app.id, app.domains)}}>Add domain</button>
                             </td>
                         </tr>
                     {/each}

@@ -74,6 +74,13 @@
 <button on:click={() => {screenSelected = "home"}}>Close</button>
 <br>
 <button on:click={deleteApp}>DELETE APP</button>
+<button class="relative inline-block px-8 py-3 overflow-hidden border border-red-600 group focus:outline-none focus:ring" on:click={deleteApp}>
+  <span class="absolute inset-y-0 left-0 w-[2px] transition-all bg-red-600 group-hover:w-full group-active:bg-red-500"></span>
+
+  <span class="relative text-sm font-medium text-red-600 transition-colors group-hover:text-white">
+    Delete App
+  </span>
+</button>
 
 {#await getApp}
     <Spinner/>
