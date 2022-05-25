@@ -9,21 +9,6 @@ COPY admin-dashboard/ .
 RUN pnpm run build
 
 
-#FROM rust:slim-buster as builder
-#
-#RUN USER=root cargo new --bin simple_selfhost_auth
-#WORKDIR /simple_selfhost_auth
-#COPY ./Cargo.* .
-#RUN mkdir -p admin-dashboard/dist
-#COPY --from=frontend /usr/src/app/dist admin-dashboard/dist
-## RUN ls -la && cat Cargo.toml && ls frontend/dist
-#RUN cargo build --release
-#RUN rm src/*.rs
-#
-#COPY . ./
-#RUN rm ./target/release/deps/simple_selfhost_auth*
-#RUN cargo build --release
-
 
 FROM rust:latest AS builder
 
