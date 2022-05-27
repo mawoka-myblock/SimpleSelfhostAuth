@@ -19,7 +19,7 @@ fn user_to_private_user(pu: &User) -> PrivateUser {
         created_at: pu.created_at,
         admin: pu.admin,
         scopes: pu.scopes.to_vec(),
-        totp_enabled: pu.totp_token.is_some()
+        totp_enabled: pu.totp_token.is_some(),
     }
 }
 
@@ -125,7 +125,7 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         created_at: res.created_at,
         admin: res.admin,
         scopes: res.scopes,
-        totp_enabled: res.totp_token.is_some()
+        totp_enabled: res.totp_token.is_some(),
     })
 }
 
@@ -200,4 +200,23 @@ pub fn patch_user(data: PatchUser, conn: &PgConnection) -> Result<PrivateUser, D
 pub fn delete_user(id: Uuid, conn: &PgConnection) -> Result<usize, DbError> {
     use schema::users::dsl::users;
     Ok(diesel::delete(users.find(id)).execute(conn)?)
+}
+
+pub fn get_single_user(
+    input_id: uuid::Uuid,
+    conn: &PgConnection,
+) -> Result<User, DbError> {
+    use schema::users::dsl::{id, users};
+    let res = users.filter(id.eq(input_id)).first::<User>(conn)?;
+    Ok(res)
+}
+
+pub fn deactivate_totp(
+    input_id: uuid::Uuid,
+    conn: &PgConnection,
+) -> Result<bool, DbError> {
+    use schema::users::dsl::{totp_token, users};
+    let target = users.find(input_id);
+    diesel::update(target).set(totp_token.eq::<Option<String>>(None)).execute(conn)?;
+    Ok(true)
 }

@@ -12,6 +12,7 @@
             console.error("ERROR!!!!!");
         }
     };
+    let user_data = loadUser()
 
     let totpData: {
         url: string | null;
@@ -38,10 +39,25 @@
                 url: json.url
             };
         }
+        user_data = loadUser()
+    };
+
+    const deactivateTOTP = async () => {
+        if (!confirm("Are you sure you want to disable TOTP?!")) {
+            return;
+        }
+        const totp_token = prompt("Please enter your totp-token");
+        await fetch(`/api/v1/users/totp?totp=${totp_token}`, {
+            method: "DELETE"
+        });
+        await fetch("/api/v1/users/logout")
+        loggedIn.set({admin: false, status: false})
+        user_data = loadUser()
+
     };
 </script>
 
-{#await loadUser()}
+{#await user_data}
     <Spinner />
 {:then user}
     <p>Username: {user.username}</p>
@@ -58,7 +74,9 @@
         </ul>
 
     {/if}
-    {#if !user.totp_enabled}
+    {#if user.totp_enabled}
+        <button on:click={deactivateTOTP}>Disable TOTP</button>
+    {:else}
         <button on:click={enableTOTP}>Enable TOTP</button>
     {/if}
 {/await}

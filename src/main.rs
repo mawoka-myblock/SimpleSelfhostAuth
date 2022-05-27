@@ -56,7 +56,9 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::login) // POST /login
                             .service(routes::users::create_user) // POST /create
                             .service(routes::users::setup_totp) // POST /setup_totp
-                            .service(routes::users::get_login_status), // GET /check
+                            .service(routes::users::get_login_status) // GET /check
+                            .service(routes::users::deactivate_totp) // DELETE /totp?totp=Int
+                            .service(routes::users::logout) // GET /logout
                     )
                     .service(
                         web::scope("/admin")
