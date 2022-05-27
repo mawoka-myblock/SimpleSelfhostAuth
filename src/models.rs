@@ -51,6 +51,7 @@ pub struct PrivateUser {
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
     pub scopes: Vec<String>,
+    pub totp_enabled: bool
 }
 
 #[derive(
@@ -68,6 +69,7 @@ pub struct App {
     pub updated_at: chrono::NaiveDateTime,
     pub token_lifetime: i32,
     pub domains: Vec<String>,
+    pub enforce_totp: bool
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -76,6 +78,7 @@ pub struct CreateAppInput {
     pub description: Option<String>,
     pub token_lifetime: i32,
     pub domains: Vec<String>,
+    pub enforce_totp: bool
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Insertable, Associations, Queryable)]
@@ -87,6 +90,7 @@ pub struct CreateApp {
     pub token_lifetime: i32,
     pub owner: Uuid,
     pub domains: Vec<String>,
+    pub enforce_totp: bool
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -96,6 +100,7 @@ pub struct PatchApp {
     pub description: Option<String>,
     pub token_lifetime: Option<i32>,
     pub domains: Option<Vec<String>>,
+    pub enforce_totp: Option<bool>
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -104,6 +109,7 @@ pub struct AppInput {
     pub description: Option<String>,
     pub token_lifetime: i32,
     pub domains: Vec<String>,
+    pub enforce_totp: bool
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

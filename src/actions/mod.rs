@@ -1,7 +1,7 @@
 pub mod app;
 pub mod user;
 
-use crate::models::PrivateUser;
+use crate::models::{App, PrivateUser};
 use actix_identity::Identity;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
@@ -64,4 +64,20 @@ pub fn create_jwt(user: PrivateUser, long: bool) -> Option<String> {
         }
         Ok(s) => Some(s),
     };
+}
+
+
+pub fn check_if_user_has_rights_to_access_app(user: PrivateUser, app: App) -> bool {
+    if user.admin {
+        return true
+    };
+    if app.enforce_totp && !user.totp_enabled {
+        return false
+    };
+    if user.scopes.contains(&format!("app:{}", &app.name)) {
+        return true
+    };
+
+
+    false
 }

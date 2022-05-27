@@ -1,4 +1,4 @@
-use crate::actions::app as actions;
+use crate::actions::{app as actions, check_if_user_has_rights_to_access_app};
 use crate::actions::parse_identity;
 use crate::db::DbPool;
 use crate::models::App;
@@ -18,6 +18,7 @@ pub async fn proxy_auth(
         Some(u) => u,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
+    /*
     let request_uri = match req
         .headers()
         .get(header::HeaderName::from_lowercase(b"x-original-uri").unwrap())
@@ -32,6 +33,7 @@ pub async fn proxy_auth(
         Some(val) => val,
         None => return Ok(HttpResponse::BadRequest().body("x-original-remote-addr header missing")),
     };
+    */
     let host = match req
         .headers()
         .get(header::HeaderName::from_lowercase(b"x-original-host").unwrap())
@@ -62,9 +64,9 @@ pub async fn proxy_auth(
         }
     };
     // println!("{:?}, {:?}, {:?}", request_uri, remote_addr, host);
-    return if user.admin || user.scopes.contains(&format!("app:{}", &app.name)) {
+    if check_if_user_has_rights_to_access_app(user, app) {
         Ok(HttpResponse::Ok().finish())
     } else {
         Ok(HttpResponse::Unauthorized().body("You don't have the rights to access this app."))
-    };
+    }
 }

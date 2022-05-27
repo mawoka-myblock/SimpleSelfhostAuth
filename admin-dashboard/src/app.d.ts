@@ -6,13 +6,9 @@ export interface PrivateUser {
 	created_at: string;
 	admin: boolean;
 	scopes: string[];
+	totp_enabled: boolean
 }
 
-export enum AvailableAdminScreens {
-	home = 'home',
-	createUser = 'createUser',
-	viewUser = 'viewUser'
-}
 
 export interface App {
 	id: string;
@@ -23,4 +19,5 @@ export interface App {
 	updated_at: string;
 	token_lifetime: number;
 	domains: string[];
+	enforce_totp: boolean
 }

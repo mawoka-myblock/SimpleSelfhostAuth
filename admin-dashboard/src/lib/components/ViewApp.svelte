@@ -3,6 +3,7 @@
     import Spinner from "./Spinner.svelte";
     import type { App } from "../../app";
     import { clickOutside } from "../clickOutside";
+    import Switch from "./Switch.svelte";
 
     export let app_id: string;
     export let screenSelected: string;
@@ -11,6 +12,7 @@
         description: string;
         token_lifetime: number;
         domains: Array<string>;
+        enforce_totp: boolean
     };
 
     let app_initial: App | null;
@@ -27,7 +29,8 @@
                 description: json.description,
                 domains: json.domains,
                 name: json.name,
-                token_lifetime: json.token_lifetime
+                token_lifetime: json.token_lifetime,
+                enforce_totp: json.enforce_totp
             };
             app_initial = json;
             return json;
@@ -49,7 +52,8 @@
             domains:
                 JSON.stringify(appChangeData.domains) === JSON.stringify(app_initial.domains)
                     ? undefined
-                    : appChangeData.domains
+                    : appChangeData.domains,
+            enforce_totp: appChangeData.enforce_totp === app_initial.enforce_totp ? undefined : appChangeData.enforce_totp
         };
         const res = await fetch("/api/v1/admin/app", {
             method: "PATCH",
@@ -82,16 +86,23 @@
     };
 </script>
 
-<button
-  on:click={() => {
+<div class="flex w-screen">
+    <button type="button"
+            class="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 place-self-end"
+            on:click={() => {
 		screenSelected = 'home';
-	}}>Close
-</button
->
-<br />
+	}}>
+        <span class="sr-only">Close menu</span>
+        <!-- Heroicons: outline/x -->
+        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+             aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+</div>
 
 <button
-  class="relative inline-block px-8 py-3 overflow-hidden border border-red-600 group focus:outline-none focus:ring"
+  class="relative inline-block px-4 py-1 overflow-hidden border border-red-600 group focus:outline-none focus:ring rounded-md"
   on:click={() => {
 		deleteApp().then();
 		delete_confirm = true;
@@ -116,28 +127,45 @@
 {#await getApp}
     <Spinner />
 {:then user}
-    <div>
+    <div class="pl-2 pb-4">
         <div>
             <label for="name">Appname: </label>
-            <input id="name" type="text" bind:value={appChangeData.name} />
+            <input id="name" type="text" bind:value={appChangeData.name}
+                   class="border-b border-dotted border-black my-2" />
         </div>
-        <div>
-            <label for="description">Description: </label>
-            <textarea id="description" type="text" bind:value={appChangeData.description} />
+        <div class="align-middle">
+            <label for="description" class="align-middle">Description: </label>
+            <textarea id="description" type="text" bind:value={appChangeData.description}
+                      class="border border-black border-dotted rounded-md py-2 align-middle" />
         </div>
         <div>
             <label for="token_lifetime">Token Lifetime: </label>
-            <input id="token_lifetime" type="number" bind:value={appChangeData.token_lifetime} />
+            <input id="token_lifetime" type="number" bind:value={appChangeData.token_lifetime}
+                   class="border-b border-dotted border-black" />
+        </div>
+        <div>
+            <p>Enforce TOTP?</p>
+            <Switch bind:on={appChangeData.enforce_totp} />
         </div>
         <div>
             <div>
                 <label for="addDomain">Add domain:</label>
-                <input id="addDomain" type="text" bind:value={tempDomainAdd} />
+                <input id="addDomain" type="text" bind:value={tempDomainAdd}
+                       class="border-b border-dotted border-black" />
                 <button
                   on:click={() => {
+                    if (tempDomainAdd === "") {
+                      return
+                    }
 						appChangeData.domains = [...appChangeData.domains, tempDomainAdd];
 					}}
-                >Add domain
+                >
+                    <svg class="w-6 h-6 inline-flex items-center" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
                 </button>
             </div>
             <div class="flex flex-row gap-2">
@@ -171,5 +199,14 @@
             </div>
         </div>
     </div>
-    <button on:click={saveData}>Save</button>
+    <button on:click={saveData}
+            class="flex items-center bg-white text-gray-500 p-2 text-sm w-auto hover:bg-green-400 transition bg-gray-200 rounded-md py-2 px-2">
+        <!-- Heroicons: outline/save -->
+        <svg class="w-5 h-5 pr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+        </svg>
+        <span>Save</span>
+    </button>
 {/await}

@@ -47,6 +47,7 @@ pub async fn login(
                         created_at: user.created_at,
                         admin: user.admin,
                         scopes: user.scopes,
+                        totp_enabled: user.totp_token.is_some()
                     };
                     if totp_token_is_some && user.totp_token.is_some() {
                         if check_totp_token(
@@ -90,6 +91,7 @@ pub async fn login(
                             created_at: user.created_at,
                             admin: user.admin,
                             scopes: user.scopes,
+                            totp_enabled: user.totp_token.is_some()
                         };
                         if totp_token_is_some && user.totp_token.is_some() {
                             if check_totp_token(

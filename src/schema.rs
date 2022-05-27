@@ -8,6 +8,7 @@ table! {
         updated_at -> Timestamp,
         token_lifetime -> Int4,
         domains -> Array<Text>,
+        enforce_totp -> Bool,
     }
 }
 

@@ -28,7 +28,8 @@ CREATE TABLE apps
     created_at     timestamp        NOT NULL        DEFAULT NOW(),
     updated_at     timestamp        NOT NULL        DEFAULT NOW(),
     token_lifetime integer          NOT NULL        DEFAULT 3600,
-    domains        text[]           NOT NULL
+    domains        text[]           NOT NULL,
+    enforce_totp   boolean          NOT NULL        DEFAULT false
 );
 
 INSERT INTO apps(name, owner, domains)

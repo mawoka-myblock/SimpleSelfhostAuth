@@ -1,6 +1,6 @@
 use crate::actions::DbError;
 use crate::models::{App, AppInput, CreateApp, PatchApp, PrivateUser, User};
-use crate::{models, schema};
+use crate::schema;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
@@ -32,6 +32,7 @@ pub fn create_app(data: AppInput, user: Input, conn: &PgConnection) -> Result<Ap
             created_at: u.created_at,
             admin: u.admin,
             scopes: u.scopes,
+            totp_enabled: u.totp_token.is_some()
         },
         Input::PrivateUser(u) => u,
     };
@@ -42,6 +43,7 @@ pub fn create_app(data: AppInput, user: Input, conn: &PgConnection) -> Result<Ap
             token_lifetime: data.token_lifetime,
             owner: private_user.id,
             domains: data.domains,
+            enforce_totp: data.enforce_totp
         })
         .execute(conn)?;
     let app = apps.filter(name.eq(data.name)).first::<App>(conn)?;
@@ -86,6 +88,10 @@ pub fn patch_app(app: PatchApp, user: PrivateUser, conn: &PgConnection) -> Resul
             Some(n) => n,
             None => old_app.token_lifetime,
         },
+        enforce_totp: match app.enforce_totp {
+            Some(v) => v,
+            None => old_app.enforce_totp
+        }
     };
     let target = apps.find(app.id);
     diesel::update(target).set(&new_app).execute(conn)?;

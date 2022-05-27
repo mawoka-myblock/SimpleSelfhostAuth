@@ -198,7 +198,7 @@ pub async fn delete_user(id: Identity,
     let user_id = query.id;
     match parse_identity(id) {
         Some(u) => {
-            if !u.admin || &u.id != &user_id {
+            if !u.admin || u.id != user_id {
                 return Ok(HttpResponse::Unauthorized().finish());
             }
         }

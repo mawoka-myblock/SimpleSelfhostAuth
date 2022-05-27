@@ -19,6 +19,7 @@ fn user_to_private_user(pu: &User) -> PrivateUser {
         created_at: pu.created_at,
         admin: pu.admin,
         scopes: pu.scopes.to_vec(),
+        totp_enabled: pu.totp_token.is_some()
     }
 }
 
@@ -124,6 +125,7 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         created_at: res.created_at,
         admin: res.admin,
         scopes: res.scopes,
+        totp_enabled: res.totp_token.is_some()
     })
 }
 
