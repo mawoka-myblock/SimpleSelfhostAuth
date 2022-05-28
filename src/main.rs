@@ -58,7 +58,7 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::setup_totp) // POST /setup_totp
                             .service(routes::users::get_login_status) // GET /check
                             .service(routes::users::deactivate_totp) // DELETE /totp?totp=Int
-                            .service(routes::users::logout) // GET /logout
+                            .service(routes::users::logout), // GET /logout
                     )
                     .service(
                         web::scope("/admin")
@@ -70,7 +70,7 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::admin::get_app) // GET /app?id=UUID
                             .service(routes::admin::patch_app) // PATCH /app
                             .service(routes::admin::delete_user) // DELETE /user?id=UUID
-                            .service(routes::admin::delete_app) // DELETE /app?id=UUID
+                            .service(routes::admin::delete_app), // DELETE /app?id=UUID
                     ),
             )
             .service(routes::auth::proxy_auth) // GET /auth
@@ -78,13 +78,12 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/account")
                     .service(routes::frontend::login) // GET /login
                     .service(routes::users::login) // POST /login
-                    .service(routes::frontend::css)
-
+                    .service(routes::frontend::css),
             )
             .service(routes::frontend::index)
             .service(routes::frontend::dist)
     })
-        .bind(("0.0.0.0", 8080))?
-        .run()
-        .await
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }

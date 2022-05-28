@@ -37,7 +37,7 @@
 	const addScope = async (user_id: string, existing_scopes: Array<string>) => {
 		const scope = prompt('Enter the scope you want to add!');
 		existing_scopes.push(scope);
-		const res = await fetch('/api/v1/admin/user', {
+		await fetch('/api/v1/admin/user', {
 			method: 'PATCH',
 			headers: {
 				'Content-Type': 'application/json'
@@ -52,7 +52,7 @@
 	const addDomain = async (app_id: string, existing_domains: Array<string>) => {
 		const domain = prompt('Enter the domain you want to add!');
 		existing_domains.push(domain);
-		const res = await fetch('/api/v1/admin/app', {
+		await fetch('/api/v1/admin/app', {
 			method: 'PATCH',
 			headers: {
 				'Content-Type': 'application/json'
@@ -64,7 +64,7 @@
 		});
 		getApps = getAppsFunction();
 	};
-	let screenSelected: string = 'home';
+	let screenSelected = 'home';
 	let selectedUserId = '';
 	let selectedAppId = '';
 

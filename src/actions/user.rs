@@ -202,21 +202,17 @@ pub fn delete_user(id: Uuid, conn: &PgConnection) -> Result<usize, DbError> {
     Ok(diesel::delete(users.find(id)).execute(conn)?)
 }
 
-pub fn get_single_user(
-    input_id: uuid::Uuid,
-    conn: &PgConnection,
-) -> Result<User, DbError> {
+pub fn get_single_user(input_id: uuid::Uuid, conn: &PgConnection) -> Result<User, DbError> {
     use schema::users::dsl::{id, users};
     let res = users.filter(id.eq(input_id)).first::<User>(conn)?;
     Ok(res)
 }
 
-pub fn deactivate_totp(
-    input_id: uuid::Uuid,
-    conn: &PgConnection,
-) -> Result<bool, DbError> {
+pub fn deactivate_totp(input_id: uuid::Uuid, conn: &PgConnection) -> Result<bool, DbError> {
     use schema::users::dsl::{totp_token, users};
     let target = users.find(input_id);
-    diesel::update(target).set(totp_token.eq::<Option<String>>(None)).execute(conn)?;
+    diesel::update(target)
+        .set(totp_token.eq::<Option<String>>(None))
+        .execute(conn)?;
     Ok(true)
 }

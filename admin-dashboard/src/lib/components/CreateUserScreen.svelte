@@ -31,7 +31,7 @@
 		validate: validateSchema(registerSchema),
 		extend: [reporter()],
 		onSubmit: async (values) => {
-			const res = await fetch('/api/v1/users/create', {
+			await fetch('/api/v1/users/create', {
 				method: 'post',
 				body: JSON.stringify({
 					email: values.email,

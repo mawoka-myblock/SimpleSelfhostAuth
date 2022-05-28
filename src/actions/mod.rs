@@ -66,18 +66,16 @@ pub fn create_jwt(user: PrivateUser, long: bool) -> Option<String> {
     };
 }
 
-
 pub fn check_if_user_has_rights_to_access_app(user: PrivateUser, app: App) -> bool {
     if user.admin {
-        return true
+        return true;
     };
     if app.enforce_totp && !user.totp_enabled {
-        return false
+        return false;
     };
     if user.scopes.contains(&format!("app:{}", &app.name)) {
-        return true
+        return true;
     };
-
 
     false
 }

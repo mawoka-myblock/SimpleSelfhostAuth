@@ -1,5 +1,5 @@
-use crate::actions::{app as actions, check_if_user_has_rights_to_access_app};
 use crate::actions::parse_identity;
+use crate::actions::{app as actions, check_if_user_has_rights_to_access_app};
 use crate::db::DbPool;
 use crate::models::App;
 use actix_identity::Identity;

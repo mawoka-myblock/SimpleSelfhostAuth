@@ -4,7 +4,7 @@ use crate::models::CreateUser;
 use crate::{actions, models};
 use actix_identity::Identity;
 use actix_web::web::{self};
-use actix_web::{get, post, delete, Error, HttpResponse};
+use actix_web::{delete, get, post, Error, HttpResponse};
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
@@ -35,8 +35,8 @@ pub async fn login(
                     &conn,
                 )
             })
-                .await?
-                .map_err(actix_web::error::ErrorInternalServerError)?;
+            .await?
+            .map_err(actix_web::error::ErrorInternalServerError)?;
             match res {
                 Some(user) => {
                     let u = models::PrivateUser {
@@ -53,7 +53,8 @@ pub async fn login(
                         if check_totp_token(
                             totp_token.as_ref().unwrap().to_string(),
                             user.totp_token.unwrap(),
-                        ) {} else {
+                        ) {
+                        } else {
                             return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
                         }
                     } else if user.totp_token.is_some() {
@@ -78,8 +79,8 @@ pub async fn login(
                         &conn,
                     )
                 })
-                    .await?
-                    .map_err(actix_web::error::ErrorInternalServerError)?;
+                .await?
+                .map_err(actix_web::error::ErrorInternalServerError)?;
                 match res {
                     Some(user) => {
                         let u = models::PrivateUser {
@@ -96,7 +97,8 @@ pub async fn login(
                             if check_totp_token(
                                 totp_token.as_ref().unwrap().to_string(),
                                 user.totp_token.unwrap(),
-                            ) {} else {
+                            ) {
+                            } else {
                                 return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
                             }
                         } else if user.totp_token.is_some() {
@@ -131,8 +133,8 @@ pub async fn create_user(
         let conn = pool.get()?;
         actions::user::create_user(data.into_inner(), &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Created().json(res))
 }
@@ -153,8 +155,8 @@ pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>) -> Result<HttpRes
         let conn = pool.get()?;
         actions::user::setup_totp_auth(user.id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -172,7 +174,12 @@ pub struct DeactivateTOTPInput {
 }
 
 #[delete("/totp")]
-pub async fn deactivate_totp(id: Identity, query: web::Query<DeactivateTOTPInput>, pool: web::Data<DbPool>, pool2: web::Data<DbPool>) -> Result<HttpResponse, Error> {
+pub async fn deactivate_totp(
+    id: Identity,
+    query: web::Query<DeactivateTOTPInput>,
+    pool: web::Data<DbPool>,
+    pool2: web::Data<DbPool>,
+) -> Result<HttpResponse, Error> {
     let totp = query.totp;
     let user = match actions::parse_identity(id.clone()) {
         Some(u) => u,
@@ -185,8 +192,8 @@ pub async fn deactivate_totp(id: Identity, query: web::Query<DeactivateTOTPInput
         let conn = pool.get()?;
         actions::user::get_single_user(user.id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
     if !check_totp_token(totp.to_string(), user_all.totp_token.unwrap()) {
         return Ok(HttpResponse::Unauthorized().finish());
     }
@@ -194,8 +201,8 @@ pub async fn deactivate_totp(id: Identity, query: web::Query<DeactivateTOTPInput
         let conn = pool2.get()?;
         actions::user::deactivate_totp(user.id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
 
     id.forget();
     Ok(HttpResponse::Ok().finish())

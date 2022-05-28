@@ -1,6 +1,6 @@
 use actix_identity::Identity;
 use actix_web::web::{self};
-use actix_web::{get, patch, post, delete, Error, HttpResponse};
+use actix_web::{delete, get, patch, post, Error, HttpResponse};
 // use deadpool_redis::{Pool, redis::{cmd}};
 use crate::actions::{self, parse_identity};
 use crate::db::DbPool;
@@ -32,8 +32,8 @@ pub async fn get_users(
         let conn = pool.get()?;
         actions::user::get_all_users(offset, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -63,8 +63,8 @@ pub async fn get_user(
         let conn = pool.get()?;
         actions::user::get_single_private_user(user_id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorNotFound)?;
+    .await?
+    .map_err(actix_web::error::ErrorNotFound)?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -82,8 +82,8 @@ pub async fn patch_user(
         let conn = pool.get()?;
         actions::user::patch_user(data.into_inner(), &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorNotFound)?;
+    .await?
+    .map_err(actix_web::error::ErrorNotFound)?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -107,8 +107,8 @@ pub async fn get_apps(
         let conn = pool.get()?;
         actions::app::list_apps(offset, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(res))
 }
@@ -136,8 +136,8 @@ pub async fn create_app(
             &conn,
         )
     })
-        .await?
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+    .await?
+    .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Created().json(created_app))
 }
@@ -161,8 +161,8 @@ pub async fn patch_app(
         let conn = pool.get()?;
         actions::app::patch_app(data.into_inner(), user, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorNotFound)?;
+    .await?
+    .map_err(actix_web::error::ErrorNotFound)?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -186,15 +186,17 @@ pub async fn get_app(
         let conn = pool.get()?;
         actions::app::get_app_from_id(app_id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorNotFound)?;
+    .await?
+    .map_err(actix_web::error::ErrorNotFound)?;
     Ok(HttpResponse::Ok().json(res))
 }
 
 #[delete("/user")]
-pub async fn delete_user(id: Identity,
-                         query: web::Query<GetUserQuery>,
-                         pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
+pub async fn delete_user(
+    id: Identity,
+    query: web::Query<GetUserQuery>,
+    pool: web::Data<DbPool>,
+) -> Result<HttpResponse, Error> {
     let user_id = query.id;
     match parse_identity(id) {
         Some(u) => {
@@ -209,15 +211,17 @@ pub async fn delete_user(id: Identity,
         let conn = pool.get()?;
         actions::user::delete_user(user_id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorNotFound)?;
+    .await?
+    .map_err(actix_web::error::ErrorNotFound)?;
     Ok(HttpResponse::Ok().finish())
 }
 
 #[delete("/app")]
-pub async fn delete_app(id: Identity,
-                        query: web::Query<GetUserQuery>,
-                        pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
+pub async fn delete_app(
+    id: Identity,
+    query: web::Query<GetUserQuery>,
+    pool: web::Data<DbPool>,
+) -> Result<HttpResponse, Error> {
     let app_id = query.id;
     match parse_identity(id) {
         Some(u) => {
@@ -232,7 +236,7 @@ pub async fn delete_app(id: Identity,
         let conn = pool.get()?;
         actions::app::delete_app_from_id(app_id, &conn)
     })
-        .await?
-        .map_err(actix_web::error::ErrorNotFound)?;
+    .await?
+    .map_err(actix_web::error::ErrorNotFound)?;
     Ok(HttpResponse::Ok().finish())
 }
