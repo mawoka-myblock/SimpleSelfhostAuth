@@ -2,6 +2,8 @@
 
 Your reverse-proxy auth-service!
 
+
+
 ## What is SimpleSelfhostAuth (SSA)?
 
 SSA is something like [Authelia](https://www.authelia.com/), but (in my opinion) simpler to set up.
@@ -12,12 +14,14 @@ SSA needs a reverse proxy to run.
 
 > You want more features? Have a look at [authentik](https://goauthentik.io/) or [Authelia](https://www.authelia.com/).
 
+## Features
+- Simple
+- Isn't very resource-intensive
+- Bug-free[^1]
+- Supports 2FA (TOTP)
+- Easy to deploy via docker
 
 ## Get started
-At first, make sure that all the requirements are installed.
-### Requirements
-- [Docker](https://docs.docker.com/get-docker/) ([-compose](https://docs.docker.com/compose/install/))
-- Nginx or any other reverse proxy
-- A public domain
-- 100mb of free ram
+Have a look at the [docs](https://ssa.mawoka.eu/quickstart/).
 
+[^1]: The backend is written with [Rust](https://rust-lang.org)
