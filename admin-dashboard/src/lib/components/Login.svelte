@@ -45,7 +45,7 @@
 	<div class="mb-6">
 		<label class="block text-gray-800 text-sm font-bold mb-2" for="password"> Password </label>
 		<input
-			class="shadow appearance-none border border-red-300 rounded w-full py-2 px-3 text-gray-800 mb-3"
+			class="shadow appearance-none rounded w-full py-2 px-3 text-gray-800 mb-3"
 			id="password"
 			type="password"
 			placeholder="******************"

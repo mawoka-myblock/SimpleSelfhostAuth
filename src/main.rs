@@ -77,7 +77,9 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/account")
                     .service(routes::frontend::login) // GET /login
-                    .service(routes::users::login), // POST /login
+                    .service(routes::users::login) // POST /login
+                    .service(routes::frontend::css)
+
             )
             .service(routes::frontend::index)
             .service(routes::frontend::dist)

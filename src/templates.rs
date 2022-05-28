@@ -4,6 +4,7 @@ use askama::Template; // bring trait in scope
 #[template(path = "login.html")]
 pub struct LoginTemplate<'a> {
     pub redir_url: &'a str,
+    pub tailwind: &'a str
 }
 
 #[derive(Template)]
@@ -12,4 +13,5 @@ pub struct ErrorTemplate<'a> {
     pub error_code: &'a str,
     pub error_title: &'a str,
     pub error_message: &'a str,
+    pub tailwind: &'a str
 }
