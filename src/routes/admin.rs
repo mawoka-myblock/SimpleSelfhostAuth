@@ -74,10 +74,13 @@ pub async fn patch_user(
     id: Identity,
     pool: web::Data<DbPool>,
 ) -> Result<HttpResponse, Error> {
-    match parse_identity(id) {
+    let user = match parse_identity(id) {
         Some(u) => u,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
+    if !user.admin || user.id != data.id {
+        return Ok(HttpResponse::Unauthorized().finish())
+    }
     let res = web::block(move || {
         let conn = pool.get()?;
         actions::user::patch_user(data.into_inner(), &conn)

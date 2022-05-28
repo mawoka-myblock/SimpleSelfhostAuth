@@ -77,5 +77,12 @@ pub fn check_if_user_has_rights_to_access_app(user: PrivateUser, app: App) -> bo
         return true;
     };
 
+    for domain in app.domains {
+        if user.scopes.contains(&format!("domain:{}", domain)) {
+            return true;
+        }
+    }
+
+
     false
 }
