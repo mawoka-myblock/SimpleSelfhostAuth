@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
+site_name: SimpleSelfhostAuth
+theme:
+  name: material
+  features:
+    - content.code.annotate
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.expand
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+  font: false
+  palette:
+    primary: green
+    accent: light blue
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.highlight
+  - pymdownx.highlight:
+      use_pygments: true
+  - footnotes
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mawoka-myblock
+
+  generator: false
+copyright: Copyright &copy; <a href="https://mawoka.eu">Mawoka</a>
+repo_name: mawoka-myblock/SimpleSelfhostAuth
+repo_url: https://github.com/mawoka-myblock/SimpleSelfhostAuth
