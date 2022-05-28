@@ -47,12 +47,12 @@ pub async fn login(query: web::Query<LoginQuery>) -> Result<HttpResponse, Error>
         .body(hello.render().unwrap()))
 }
 
-#[actix_web::get("/")]
+#[get("/")]
 pub async fn index() -> impl Responder {
     handle_embedded_file("index.html")
 }
 
-#[actix_web::get("/{_:.*}")]
+#[get("/{_:.*}")]
 pub async fn dist(path: web::Path<String>) -> impl Responder {
     handle_embedded_file(path.as_str())
 }
