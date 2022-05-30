@@ -1,6 +1,7 @@
 pub mod app;
 pub mod user;
 
+use crate::models::TotpType;
 use crate::models::{App, PrivateUser};
 use actix_identity::Identity;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -70,7 +71,7 @@ pub fn check_if_user_has_rights_to_access_app(user: PrivateUser, app: App) -> bo
     if user.admin {
         return true;
     };
-    if app.enforce_totp && !user.totp_enabled {
+    if app.enforce_totp && user.totp_type.is_none() {
         return false;
     };
     if user.scopes.contains(&format!("app:{}", &app.name)) {
@@ -83,6 +84,14 @@ pub fn check_if_user_has_rights_to_access_app(user: PrivateUser, app: App) -> bo
         }
     }
 
-
     false
+}
+
+pub fn totp_type_string_to_totp_enum(data: &str) -> TotpType {
+    match data {
+        "Totp" => TotpType::Totp,
+        "Gotify" => TotpType::Gotify,
+        "Ntfy" => TotpType::Ntfy,
+        _ => panic!("Wrong type"),
+    }
 }

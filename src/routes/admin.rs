@@ -79,7 +79,7 @@ pub async fn patch_user(
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
     if !user.admin || user.id != data.id {
-        return Ok(HttpResponse::Unauthorized().finish())
+        return Ok(HttpResponse::Unauthorized().finish());
     }
     let res = web::block(move || {
         let conn = pool.get()?;

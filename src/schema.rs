@@ -1,4 +1,7 @@
 table! {
+    use diesel::sql_types::*;
+    use crate::models::*;
+
     apps (id) {
         id -> Uuid,
         name -> Text,
@@ -13,6 +16,9 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+    use crate::models::*;
+
     users (id) {
         id -> Uuid,
         username -> Text,
@@ -23,7 +29,8 @@ table! {
         created_at -> Timestamp,
         admin -> Bool,
         scopes -> Array<Text>,
-        totp_token -> Nullable<Text>,
+        totp_data -> Nullable<Text>,
+        two_factor -> Nullable<Two_factor_type>,
     }
 }
 

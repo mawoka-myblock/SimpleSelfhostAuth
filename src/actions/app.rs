@@ -1,4 +1,4 @@
-use crate::actions::DbError;
+use crate::actions::{totp_type_string_to_totp_enum, DbError};
 use crate::models::{App, AppInput, CreateApp, PatchApp, PrivateUser, User};
 use crate::schema;
 use diesel::prelude::*;
@@ -32,7 +32,10 @@ pub fn create_app(data: AppInput, user: Input, conn: &PgConnection) -> Result<Ap
             created_at: u.created_at,
             admin: u.admin,
             scopes: u.scopes,
-            totp_enabled: u.totp_token.is_some(),
+            totp_type: match u.two_factor {
+                Some(t) => Some(totp_type_string_to_totp_enum(&t)),
+                None => None,
+            },
         },
         Input::PrivateUser(u) => u,
     };

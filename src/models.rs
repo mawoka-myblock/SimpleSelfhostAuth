@@ -1,7 +1,19 @@
 use super::chrono;
 use super::schema::*;
+use diesel::sql_types::Text;
+use diesel::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+#[allow(non_camel_case_types)]
+pub type Two_factor_type = Text;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum TotpType {
+    Totp,
+    Gotify,
+    Ntfy,
+}
 
 #[derive(Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable)]
 #[primary_key(id)]
@@ -16,7 +28,8 @@ pub struct User {
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
     pub scopes: Vec<String>,
-    pub totp_token: Option<String>,
+    pub totp_data: Option<String>, // Either Totp, Gotify or Ntfy
+    pub two_factor: Option<String>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
@@ -51,7 +64,7 @@ pub struct PrivateUser {
     pub created_at: chrono::NaiveDateTime,
     pub admin: bool,
     pub scopes: Vec<String>,
-    pub totp_enabled: bool,
+    pub totp_type: Option<TotpType>,
 }
 
 #[derive(

@@ -1,5 +1,10 @@
 # Quick Start
 
+
+
+!!! warning
+      Since SSA is in early development, expect breaking changes!
+
 ## Requirements
 
 - A supported reverse proxy. Have a look at the [list of reverse proxies](/reverse-proxy)

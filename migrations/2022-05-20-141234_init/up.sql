@@ -1,5 +1,7 @@
 -- Your SQL goes here
 
+CREATE TYPE two_factor_type AS ENUM ('Totp', 'Gotify', 'Ntfy');
+
 CREATE TABLE users
 (
     id          uuid PRIMARY KEY NOT NULL UNIQUE DEFAULT gen_random_uuid(),
@@ -11,7 +13,9 @@ CREATE TABLE users
     created_at  timestamp        NOT NULL        DEFAULT now(),
     admin       boolean          NOT NULL        DEFAULT false,
     scopes      text[]           NOT NULL        DEFAULT array []::text[],
-    totp_token  text             NULL
+    totp_data   text             NULL,
+    two_factor  two_factor_type  NULL
+
 
 );
 INSERT INTO users(id, username, password, email, admin)
