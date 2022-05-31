@@ -22,26 +22,45 @@
         url: string | null;
         qr_code: string | null;
         secret: string | null;
+        ntfy_url: string | null
     } = {
         url: null,
         qr_code: null,
-        secret: null
+        secret: null,
+        ntfy_url: null
     };
     const enableTOTP = async () => {
         if (!confirm("Are you sure you want to enable TOTP?!")) {
             return;
         }
-        const res = await fetch("/api/v1/users/setup_totp", { method: "POST" });
+        const ntfy = confirm("Do you want to use Ntfy instead o TOTP?");
+        const res = await fetch("/api/v1/users/setup_totp", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({totp_type: ntfy ? "Ntfy" : "Totp"})
+        });
         if (res.status === 401) {
             loggedIn.set({ status: false, admin: false });
             return;
         } else if (res.status === 200) {
             let json = await res.json();
-            totpData = {
-                secret: json.secret,
-                qr_code: json.qr_code,
-                url: json.url
-            };
+            if (json.totp_type === "Totp") {
+                totpData = {
+                    secret: json.totp.secret,
+                    qr_code: json.totp.qr_code,
+                    url: json.totp.url,
+                    ntfy_url: null
+                };
+            } else if (json.totp_type === "Ntfy") {
+                totpData = {
+                    secret: null,
+                    url: null,
+                    qr_code: null,
+                    ntfy_url: json.ntfy.url
+                };
+            }
         }
         user_data = loadUser();
     };
@@ -75,8 +94,8 @@
                     "Content-Type": "application/json"
                 }
         });
-        await fetch("/api/v1/users/logout")
-        loggedIn.set({status: false, admin: false})
+        await fetch("/api/v1/users/logout");
+        loggedIn.set({ status: false, admin: false });
     };
 
     const checkIfPasswordChangeIsOk = () => {
@@ -114,7 +133,7 @@
             {/each}
         </ul>
     {/if}
-    {#if user.totp_enabled}
+    {#if user.totp_type}
         <button on:click={deactivateTOTP}>Disable TOTP</button>
     {:else}
         <button on:click={enableTOTP}>Enable TOTP</button>
@@ -145,4 +164,8 @@
         />
         <a href={totpData.url}>Or click this link</a>
     </div>
+{/if}
+{#if totpData.ntfy_url}
+    <p>{totpData.ntfy_url}</p>
+
 {/if}

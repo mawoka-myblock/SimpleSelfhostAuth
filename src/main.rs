@@ -1,3 +1,6 @@
+#![allow(clippy::extra_unused_lifetimes)]
+
+
 pub mod actions;
 pub mod db;
 pub mod models;
@@ -58,7 +61,8 @@ async fn main() -> std::io::Result<()> {
                             .service(routes::users::setup_totp) // POST /setup_totp
                             .service(routes::users::get_login_status) // GET /check
                             .service(routes::users::deactivate_totp) // DELETE /totp?totp=Int
-                            .service(routes::users::logout), // GET /logout
+                            .service(routes::users::logout) // GET /logout
+                            .service(routes::users::request_token) // POST /request_token
                     )
                     .service(
                         web::scope("/admin")

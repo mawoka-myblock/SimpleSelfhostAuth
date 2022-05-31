@@ -8,13 +8,12 @@ use uuid::Uuid;
 #[allow(non_camel_case_types)]
 pub type Two_factor_type = Text;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TotpType {
     Totp,
     Gotify,
     Ntfy,
 }
-
 #[derive(Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable)]
 #[primary_key(id)]
 #[table_name = "users"]
@@ -31,7 +30,6 @@ pub struct User {
     pub totp_data: Option<String>, // Either Totp, Gotify or Ntfy
     pub two_factor: Option<String>,
 }
-
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 #[table_name = "users"]
 pub struct CreateUser {
@@ -44,7 +42,6 @@ pub struct CreateUser {
     // verified: Option<bool>,
     // created_at: chrono::NaiveDateTime,
 }
-
 #[derive(Deserialize, Serialize, Queryable, Debug, Clone, AsChangeset)]
 #[table_name = "users"]
 pub struct PublicUser {
@@ -66,7 +63,6 @@ pub struct PrivateUser {
     pub scopes: Vec<String>,
     pub totp_type: Option<TotpType>,
 }
-
 #[derive(
     Debug, Clone, Queryable, Serialize, Deserialize, AsChangeset, Insertable, Associations,
 )]
@@ -93,7 +89,6 @@ pub struct CreateAppInput {
     pub domains: Vec<String>,
     pub enforce_totp: bool,
 }
-
 #[derive(Debug, Clone, Deserialize, Serialize, Insertable, Associations, Queryable)]
 #[belongs_to(foreign_key = id)]
 #[table_name = "apps"]

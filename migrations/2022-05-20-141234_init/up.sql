@@ -2,6 +2,8 @@
 
 CREATE TYPE two_factor_type AS ENUM ('Totp', 'Gotify', 'Ntfy');
 
+CREATE CAST (text AS two_factor_type) WITH INOUT AS ASSIGNMENT;
+
 CREATE TABLE users
 (
     id          uuid PRIMARY KEY NOT NULL UNIQUE DEFAULT gen_random_uuid(),

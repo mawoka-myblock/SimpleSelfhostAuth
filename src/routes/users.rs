@@ -1,11 +1,8 @@
 use crate::actions::totp_type_string_to_totp_enum;
-use crate::actions::user::{
-    check_totp_token, get_single_private_user, get_user_by_email, get_user_by_email_and_password,
-    get_user_by_username,
-};
+use crate::actions::user::{check_totp_token, get_user_by_email, get_user_by_username, user_to_private_user};
 use crate::db::DbPool;
 use crate::models::{CreateUser, TotpType};
-use crate::{actions, models};
+use crate::{actions};
 use actix_identity::Identity;
 use actix_web::web::{self};
 use actix_web::{delete, get, post, Error, HttpResponse};
@@ -27,6 +24,7 @@ pub async fn login(
     id: Identity,
     pool: web::Data<DbPool>,
     data: web::Json<LoginInput>,
+    redis_pool: web::Data<Pool>,
 ) -> Result<HttpResponse, Error> {
     let stay_logged_in = data.stay_logged_in;
     let totp_token = data.0.clone().totp;
@@ -45,27 +43,16 @@ pub async fn login(
                 .map_err(actix_web::error::ErrorInternalServerError)?;
             match res {
                 Some(user) => {
-                    let u = models::PrivateUser {
-                        id: user.id,
-                        username: user.username,
-                        profile_pic: user.profile_pic,
-                        email: user.email,
-                        created_at: user.created_at,
-                        admin: user.admin,
-                        scopes: user.scopes,
-                        totp_type: match user.two_factor {
-                            Some(t) => Some(totp_type_string_to_totp_enum(&t)),
-                            None => None,
-                        },
-                    };
+                    let u = user_to_private_user(&user);
                     if totp_token_is_some && user.totp_data.is_some() {
                         if check_totp_token(
                             totp_token.as_ref().unwrap().to_string(),
-                            user.totp_token.unwrap(),
-                        ) {} else {
+                            user,
+                            redis_pool,
+                        ).await {} else {
                             return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
                         }
-                    } else if user.totp_token.is_some() {
+                    } else if user.totp_data.is_some() {
                         return Ok(HttpResponse::BadRequest().body("TOTP not provided"));
                     }
                     id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
@@ -91,27 +78,16 @@ pub async fn login(
                     .map_err(actix_web::error::ErrorInternalServerError)?;
                 match res {
                     Some(user) => {
-                        let u = models::PrivateUser {
-                            id: user.id,
-                            username: user.username,
-                            profile_pic: user.profile_pic,
-                            email: user.email,
-                            created_at: user.created_at,
-                            admin: user.admin,
-                            scopes: user.scopes,
-                            totp_type: match user.two_factor {
-                                Some(t) => Some(totp_type_string_to_totp_enum(&t)),
-                                None => None,
-                            },
-                        };
-                        if totp_token_is_some && user.totp_token.is_some() {
+                        let u = user_to_private_user(&user);
+                        if totp_token_is_some && user.totp_data.is_some() {
                             if check_totp_token(
                                 totp_token.as_ref().unwrap().to_string(),
-                                user.totp_token.unwrap(),
-                            ) {} else {
+                                user,
+                                redis_pool,
+                            ).await {} else {
                                 return Ok(HttpResponse::Unauthorized().body("TOTP invalid"));
                             }
-                        } else if user.totp_token.is_some() {
+                        } else if user.totp_data.is_some() {
                             return Ok(HttpResponse::BadRequest().body("TOTP not provided"));
                         }
                         id.remember(match actions::create_jwt(u.clone(), stay_logged_in) {
@@ -155,15 +131,20 @@ pub async fn logout(id: Identity) -> Result<HttpResponse, Error> {
     Ok(HttpResponse::Ok().finish())
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SetupTotpInput {
+    pub totp_type: TotpType,
+}
+
 #[post("/setup_totp")]
-pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
+pub async fn setup_totp(id: Identity, pool: web::Data<DbPool>, totp_type: web::Json<SetupTotpInput>) -> Result<HttpResponse, Error> {
     let user = match actions::parse_identity(id) {
         Some(u) => u,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
     let res = web::block(move || {
         let conn = pool.get()?;
-        actions::user::setup_totp_auth(user.id, &conn)
+        actions::user::setup_totp_auth(user.id, &conn, totp_type.into_inner().totp_type)
     })
         .await?
         .map_err(actix_web::error::ErrorInternalServerError)?;
@@ -189,6 +170,7 @@ pub async fn deactivate_totp(
     query: web::Query<DeactivateTOTPInput>,
     pool: web::Data<DbPool>,
     pool2: web::Data<DbPool>,
+    redis: web::Data<Pool>,
 ) -> Result<HttpResponse, Error> {
     let totp = query.totp;
     let user = match actions::parse_identity(id.clone()) {
@@ -204,7 +186,7 @@ pub async fn deactivate_totp(
     })
         .await?
         .map_err(actix_web::error::ErrorInternalServerError)?;
-    if !check_totp_token(totp.to_string(), user_all.totp_data.unwrap()) {
+    if !check_totp_token(totp.to_string(), user_all, redis).await {
         return Ok(HttpResponse::Unauthorized().finish());
     }
     web::block(move || {
@@ -224,12 +206,12 @@ pub struct RequestTokenInput {
     pub email: Option<String>,
 }
 
+
 #[post("/request_token")]
 pub async fn request_token(
-    id: Identity,
+    _id: Identity,
     data: web::Json<RequestTokenInput>,
     pool: web::Data<DbPool>,
-    pool2: web::Data<DbPool>,
     redis_pool: web::Data<Pool>,
 ) -> Result<HttpResponse, Error> {
     let user;
@@ -277,6 +259,11 @@ pub async fn request_token(
         .collect();
     // END generating token
     let client = reqwest::Client::new();
+    let mut conn = redis_pool.get().await.unwrap();
+    cmd("SET")
+        .arg(&[format!("login:{}", token), user.id.to_string()])
+        .query_async::<_, ()>(&mut conn)
+        .await.unwrap();
     if totp_type == TotpType::Ntfy {
         let base_url = match user.totp_data {
             Some(t) => t,
@@ -291,12 +278,24 @@ pub async fn request_token(
             .header("Email", user.email)
             .send()
             .await;
-        let _ = match res {
-            Ok(a) => a,
-            Err(_) => return Ok(HttpResponse::InternalServerError().finish())
+        return match res {
+            Ok(_) => Ok(HttpResponse::Ok().finish()),
+            Err(_) => Ok(HttpResponse::InternalServerError().finish())
+        };
+    } else if totp_type == TotpType::Gotify {
+        let base_url = match user.totp_data {
+            Some(t) => t,
+            None => return Ok(HttpResponse::InternalServerError().finish())
+        };
+
+        let res = client.post(base_url)
+            .form(&[("title", "Login-Code for SSA"), ("priority", "5"), ("message", &format!("Your login-token is {} and it's valid for 10 minutes.", token))])
+            .send()
+            .await;
+        return match res {
+            Ok(_) => Ok(HttpResponse::Ok().finish()),
+            Err(_) => Ok(HttpResponse::InternalServerError().finish())
         };
     }
-
-
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::InternalServerError().finish())
 }

@@ -1,17 +1,19 @@
+use actix_web::web::Data;
 use crate::actions::{totp_type_string_to_totp_enum, DbError};
-use crate::models::{CreateUser, PatchUser, PrivateUser, User};
+use crate::models::{CreateUser, PatchUser, PrivateUser, TotpType, User};
 use crate::schema;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use deadpool_redis::Pool;
 use diesel::prelude::*;
-use redis::AsyncCommands;
+use redis::cmd;
 use serde::{Deserialize, Serialize};
 use totp_rs::{Algorithm, TOTP};
 use uuid::Uuid;
 
-fn user_to_private_user(pu: &User) -> PrivateUser {
+pub fn user_to_private_user(pu: &User) -> PrivateUser {
     PrivateUser {
         id: pu.id,
         username: pu.username.to_string(),
@@ -20,46 +22,100 @@ fn user_to_private_user(pu: &User) -> PrivateUser {
         created_at: pu.created_at,
         admin: pu.admin,
         scopes: pu.scopes.to_vec(),
-        totp_type: match pu.clone().two_factor {
-            Some(t) => Some(totp_type_string_to_totp_enum(&t)),
-            None => None,
-        },
+        totp_type: pu.clone().two_factor.map(|t| totp_type_string_to_totp_enum(&t)),
     }
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SetupTOTPResponse {
+pub struct TotpData {
     pub url: String,
     pub qr_code: String,
     pub secret: String,
 }
 
-pub fn setup_totp_auth(user_id: Uuid, conn: &PgConnection) -> Result<SetupTOTPResponse, DbError> {
+#[derive(Serialize, Deserialize)]
+pub struct NtfyData {
+    pub url: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SetupTOTPResponse {
+    pub totp_type: TotpType,
+    pub totp: Option<TotpData>,
+    pub ntfy: Option<NtfyData>,
+}
+
+pub fn setup_totp_auth(user_id: Uuid, conn: &PgConnection, totp_type: TotpType) -> Result<SetupTOTPResponse, DbError> {
     use rand::prelude::*;
     use rand_chacha::ChaCha20Rng;
     use schema::users::dsl::{totp_data, two_factor, users};
-    let mut rng = ChaCha20Rng::from_entropy();
-    let mut res = [0u8; 32];
-    rng.fill(&mut res);
-    let res = hex::encode(res);
     let target = users.find(user_id);
-    diesel::update(target)
-        .set((totp_data.eq(Some(&res)), two_factor.eq("Totp")))
-        .execute(conn)?;
-    let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, res);
-    Ok(SetupTOTPResponse {
-        secret: totp.get_secret_base32(),
-        url: totp.get_url("SimpleSelfhostAuth", "SimpleSelfhostAuth"),
-        qr_code: match totp.get_qr("SimpleSelfhostAuth", "SimpleSelfhostAuth") {
-            Ok(t) => t,
-            Err(_) => "".to_string(),
-        },
-    })
+    let mut rng = ChaCha20Rng::from_entropy();
+    if totp_type == TotpType::Totp {
+        let mut res = [0u8; 32];
+        rng.fill(&mut res);
+        let res = hex::encode(res);
+        diesel::update(target)
+            .set((totp_data.eq(Some(&res)), two_factor.eq("Totp")))
+            .execute(conn)?;
+        let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, res);
+        Ok(SetupTOTPResponse {
+            totp_type,
+            totp: Some(TotpData {
+                secret: totp.get_secret_base32(),
+                url: totp.get_url("SimpleSelfhostAuth", "SimpleSelfhostAuth"),
+                qr_code: match totp.get_qr("SimpleSelfhostAuth", "SimpleSelfhostAuth") {
+                    Ok(t) => t,
+                    Err(_) => "".to_string(),
+                },
+            }),
+            ntfy: None,
+        })
+    } else if totp_type == TotpType::Ntfy {
+        let mut res = [0u8; 8];
+        rng.fill(&mut res);
+        let res = hex::encode(res);
+        let ntfy_url = format!("https://ntfy.sh/{}", res);
+        diesel::update(target)
+            .set((totp_data.eq(Some(&ntfy_url)), two_factor.eq("Ntfy")))
+            .execute(conn)?;
+        Ok(SetupTOTPResponse {
+            totp_type,
+            totp: None,
+            ntfy: Some(NtfyData {
+                url: ntfy_url
+            }),
+        })
+    } else if totp_type == TotpType::Gotify {
+        Ok(SetupTOTPResponse {
+            totp_type,
+            totp: None,
+            ntfy: None,
+        })
+    } else {
+        panic!("SJouldn't happen!!!");
+    }
 }
 
-pub fn check_totp_token(totp_token: String, totp_secret: String) -> bool {
-    let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, totp_secret);
-    totp.check_current(&*totp_token).unwrap_or(false)
+pub async fn check_totp_token(totp_token: String, user: User, pool: Data<Pool>) -> bool {
+    if user.two_factor.is_none() {
+        return false;
+    };
+    let totp_type = totp_type_string_to_totp_enum(&user.two_factor.unwrap());
+    return if totp_type == TotpType::Totp {
+        let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, user.totp_data.unwrap());
+        totp.check_current(&*totp_token).unwrap_or(false)
+    } else if totp_type == TotpType::Gotify || totp_type == TotpType::Ntfy {
+        let mut conn = pool.get().await.unwrap();
+        let redis_res: Option<String> = cmd("GET")
+            .arg(&[format!("login:{}", totp_token)])
+            .query_async(&mut conn)
+            .await
+            .unwrap();
+        redis_res.is_some()
+    } else {
+        false
+    };
 }
 
 pub fn get_user_by_email_and_password(
@@ -130,10 +186,7 @@ pub fn create_user(user_data: CreateUser, conn: &PgConnection) -> Result<Private
         created_at: res.created_at,
         admin: res.admin,
         scopes: res.scopes,
-        totp_type: match res.clone().two_factor {
-            Some(t) => Some(totp_type_string_to_totp_enum(&t)),
-            None => None,
-        },
+        totp_type: res.two_factor.map(|t| totp_type_string_to_totp_enum(&t)),
     })
 }
 
