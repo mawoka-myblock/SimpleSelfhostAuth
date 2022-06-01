@@ -5,19 +5,54 @@
 {% block head %}
 <script>
 
-    const sendLogin = async (login_data) => {
-        const res = await fetch("/account/login", {
-            method: "POST",
-            body: JSON.stringify(login_data),
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
-        if (res.status === 200) {
-            window.location.replace("{{redir_url}}")
-        }
-
+  const pureLoginFunction = async (loginData) => {
+    const res = await fetch("/account/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: loginData.username,
+        password: loginData.password,
+        stay_logged_in: loginData.stay_logged_in,
+        totp: loginData.totp === "" ? undefined : parseInt(loginData.totp)
+      })
+    });
+    if (res.status === 200) {
+      window.location.replace("{{redir_url}}");
+    } else {
+      alert("Login didn't work!");
     }
+  };
+
+  const sendLogin = async (login_data) => {
+    const res = await fetch("/account/request_token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username: login_data.username })
+    });
+    if (res.status === 401) {
+      await pureLoginFunction(login_data);
+    } else if (res.status === 200) {
+      login_data.totp = prompt("A token has been sent to your device. Please enter it.")
+      await pureLoginFunction(login_data);
+    } else {
+      alert("Unexpected error!");
+    }
+/*    const res = await fetch("/account/login", {
+      method: "POST",
+      body: JSON.stringify(login_data),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    if (res.status === 200) {
+      window.location.replace("{{redir_url}}");
+    }*/
+
+  };
 </script>
 
 {% endblock %}
